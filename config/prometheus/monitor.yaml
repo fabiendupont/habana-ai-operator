@@ -1,0 +1,42 @@
+# Prometheus Monitor Service (Metrics)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: controller-manager-metrics-monitor
+  namespace: system
+spec:
+  endpoints:
+    - path: /metrics
+      port: https
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: controller-manager-metrics
+  namespace: system
+spec:
+  groups:
+    - name: Habana AI Operator Reconciliation Failed
+      rules:
+        - alert: HabanaAIOperatorReconciliationFailed
+          expr: |
+             habana_ai_operator_reconciliation_failed > 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: The reconciliation of one or more DeviceConfigs is failing.
+            message: |
+              The reconciliation of one or more DeviceConfigs is failing, please check the operator
+              respective DeviceConfig CR(s) for more details.

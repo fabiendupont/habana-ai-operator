@@ -1,0 +1,45 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - gaudi.habana.ai
+  resources:
+  - deviceconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gaudi.habana.ai
+  resources:
+  - deviceconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - gaudi.habana.ai
+  resources:
+  - deviceconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ooto.sigs.k8s.io
+  resources:
+  - modules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

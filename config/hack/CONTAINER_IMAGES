@@ -1,0 +1,9 @@
+[
+  {
+    "tplvar": "DEVICE_PLUGIN_IMAGE",
+    "registry": "vault.habana.ai",
+    "namespace": "docker-k8s-device-plugin",
+    "name": "docker-k8s-device-plugin",
+    "tag": "1.4.1"
+  }
+]

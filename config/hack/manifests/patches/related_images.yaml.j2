@@ -1,0 +1,9 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: habana-ai-operator.v99.0.0
+  namespace: placeholder
+spec:
+  relatedImages:
+    - name: device-plugin
+      image: {{ DEVICE_PLUGIN_IMAGE }}
