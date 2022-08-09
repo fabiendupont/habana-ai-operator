@@ -134,14 +134,9 @@ func (r *moduleReconciler) SetDesiredModule(m *kmmov1alpha1.Module, cr *hlaiv1al
 		return errors.New("module cannot be nil")
 	}
 
-	kernelMappings := []kmmov1alpha1.KernelMapping{
-		{
-			ContainerImage: fmt.Sprintf("%s:%s-${KERNEL_FULL_VERSION}", cr.Spec.DriverImage, cr.Spec.DriverVersion),
-			Regexp:         `^.*\.el\d_?\d?\..*$`,
-		},
-	}
 	driver := r.makeDriverHabanaContainer(cr)
 	devicePlugin := r.makeDevicePluginContainer(cr)
+	kernelMappings := r.makeKernelMappings(cr)
 	volumes := r.makeAdditionalVolumes(cr)
 
 	m.Spec = kmmov1alpha1.ModuleSpec{
@@ -266,6 +261,17 @@ func (r *moduleReconciler) makeDevicePluginContainer(cr *hlaiv1alpha1.DeviceConf
 	}
 
 	return devicePlugin
+}
+
+func (r *moduleReconciler) makeKernelMappings(cr *hlaiv1alpha1.DeviceConfig) []kmmov1alpha1.KernelMapping {
+	kernelMappings := []kmmov1alpha1.KernelMapping{
+		{
+			ContainerImage: fmt.Sprintf("%s:%s-${KERNEL_FULL_VERSION}", cr.Spec.DriverImage, cr.Spec.DriverVersion),
+			Regexp:         `^.*\.el\d_?\d?\..*$`,
+		},
+	}
+
+	return kernelMappings
 }
 
 func (r *moduleReconciler) makeAdditionalVolumes(cr *hlaiv1alpha1.DeviceConfig) []corev1.Volume {

@@ -9,7 +9,5 @@ spec:
       containers:
         - name: manager
           env:
-            - name: "DCGM_EXPORTER_IMAGE"
-              value: {{ DCGM_EXPORTER_IMAGE }}
             - name: "DEVICE_PLUGIN_IMAGE"
               value: {{ DEVICE_PLUGIN_IMAGE }}
