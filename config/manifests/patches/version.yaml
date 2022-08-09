@@ -1,0 +1,9 @@
+- op: replace
+  path: /metadata/annotations/olm.skipRange
+  value: '>=0.0.0 <99.0.0'
+- op: replace
+  path: /metadata/name
+  value: habana-ai-operator.v99.0.0
+- op: replace
+  path: /spec/version
+  value: 99.0.0

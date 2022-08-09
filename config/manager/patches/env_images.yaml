@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: manager
+          env:
+            - name: "DCGM_EXPORTER_IMAGE"
+              value: 
+            - name: "DEVICE_PLUGIN_IMAGE"
+              value: vault.habana.ai/docker-k8s-device-plugin/docker-k8s-device-plugin@sha256:8d26825a2745effc2592b80fa7b7127e9d844ae516379737ef137e0b7b07ad7c

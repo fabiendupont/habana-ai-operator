@@ -1,6 +1,6 @@
 # Generated bundle files
 bundle*
-config/*/patches/*.yaml
+config/hack/patches/*.yaml
 
 # Binaries for programs and plugins
 *.exe
