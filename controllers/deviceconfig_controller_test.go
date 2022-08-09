@@ -94,6 +94,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 						nsv.EXPECT().CheckDeviceConfigForConflictingNodeSelector(ctx, dc).Return(nil),
 						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
 						fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(nil),
+						mr.EXPECT().ReconcileModule(ctx, dc).Return(nil),
 						cu.EXPECT().SetConditionsReady(ctx, dc, "Reconciled", gomock.Any()).Return(nil),
 					)
 				})
