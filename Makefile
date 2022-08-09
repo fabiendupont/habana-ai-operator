@@ -30,7 +30,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # habana.ai/habana-operator-bundle:$VERSION and habana.ai/habana-operator-catalog:$VERSION.
 #IMAGE_TAG_BASE ?= vault.habana.ai/habana-ai-operator/habana-ai-operator
-IMAGE_TAG_BASE ?= quay.io/fabiendupont/habana-ai-operator
+IMAGE_TAG_BASE ?= ghcr.io/fabiendupont/habana-ai-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -123,7 +123,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
+# TODO: Re-enable test dep
+#docker-build: test ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 .PHONY: docker-push
@@ -147,12 +149,16 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 templates: pipenv
 	PIPENV_PIPFILE=config/hack/Pipfile pipenv sync
 	CONFIG_CONTAINER_IMAGES=./config/hack/CONTAINER_IMAGES \
+	VAULT_HABANA_AI_USERNAME="" \
+	VAULT_HABANA_AI_PASSWORD="" \
+	GHCR_IO_USERNAME="" \
+	GHCR_IO_PASSWORD="" \
 	IMG=${IMG} \
 	PIPENV_PIPFILE=config/hack/Pipfile \
 	pipenv run python config/hack/render_kustomize_templates.py
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: templates manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 

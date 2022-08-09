@@ -2,6 +2,7 @@ apiVersion: gaudi.habana.ai/v1alpha1
 kind: DeviceConfig
 metadata:
   name: deviceconfig-gaudi
+  namespace: habana-ai-operator
 spec:
   driverImage: ghcr.io/fabiendupont/habana-ai-driver
   driverVersion: 1.4.1

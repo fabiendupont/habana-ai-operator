@@ -37,7 +37,7 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: "DRIVER_HABANA_IMAGE_BASENAME"
-          value: "quay.io/fabiendupont/habana-driver"
+          value: "ghcr.io/fabiendupont/habana-ai-driver"
         image: controller:latest
         name: manager
         securityContext:

@@ -5,7 +5,7 @@ WORKDIR /opt/app-root/src
 # Copy the Makefile
 COPY --chown=1001:0 Makefile Makefile
 # Copy the Go Modules manifests and vendored dependencies
-COPY --chown 1001:0 go.mod go.mod
+COPY --chown=1001:0 go.mod go.mod
 COPY --chown=1001:0 go.sum go.sum
 COPY --chown=1001:0 vendor/ vendor/
 
@@ -16,7 +16,7 @@ COPY --chown=1001:0 controllers/ controllers/
 COPY --chown=1001:0 internal/ internal/
 
 # Build the controller manager
-RUN go build -ldflags="-s -w" -o manager main.go
+RUN go build -ldflags="-s -w" -o bin/manager main.go
 
 # Use UBI8 Micro as minimal base image to package the manager binary
 # Refer to https://www.redhat.com/en/blog/introduction-ubi-micro for more details

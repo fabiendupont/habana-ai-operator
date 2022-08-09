@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hl-smi
+  namespace: habana-ai-operator
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: ghcr.io/fabiendupont/habana-ai-hl-smi:latest
+    imagePullPolicy: IfNotPresent
+    name: hl-smi
+    resources:
+      limits:
+        habana.ai/gaudi: "1"
