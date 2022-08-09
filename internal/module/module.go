@@ -242,12 +242,31 @@ func (r *moduleReconciler) makeDevicePluginContainer(cr *hlaiv1alpha1.DeviceConf
 		Name: getDevicePluginName(cr),
 	}
 
+	devicePlugin.Args = []string{
+		"--dev_type",
+		"gaudi",
+	}
+
+	devicePlugin.Command = []string{
+		"habanalabs-device-plugin",
+	}
+
 	devicePlugin.Env = []corev1.EnvVar{
 		{Name: "LD_LIBRARY_PATH", Value: "/usr/lib/habanalabs"},
 	}
 
 	devicePlugin.Image = s.Settings.DevicePluginImage
 	devicePlugin.ImagePullPolicy = corev1.PullAlways
+
+	privileged := true
+	rkmmoUser := int64(0)
+	devicePlugin.SecurityContext = &corev1.SecurityContext{
+		Privileged: &privileged,
+		RunAsUser:  &rkmmoUser,
+		SELinuxOptions: &corev1.SELinuxOptions{
+			Level: "s0",
+		},
+	}
 
 	devicePlugin.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{

@@ -35,6 +35,7 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/metrics"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
+	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
 
 // Reconciler reconciles a DeviceConfig object
@@ -156,6 +157,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
+	err := s.Settings.Load()
+	if err != nil {
+		return err
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("device-config").
 		For(&hlaiv1alpha1.DeviceConfig{}).
