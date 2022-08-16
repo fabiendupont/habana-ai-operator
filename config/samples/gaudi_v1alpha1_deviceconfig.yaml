@@ -4,4 +4,4 @@ metadata:
   name: deviceconfig-gaudi
 spec:
   driverImage: ghcr.io/fabiendupont/habana-ai-driver
-  driverVersion: 1.4.1-11
+  driverVersion: 1.6.0-439
