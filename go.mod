@@ -10,7 +10,7 @@ require (
 	github.com/qbarrand/oot-operator v0.0.0-20220628134342-5a7dc2058dac
 	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.24.3
-	k8s.io/apimachinery v0.24.3
+	k8s.io/apimachinery v0.24.4
 	k8s.io/client-go v0.24.3
 	k8s.io/klog/v2 v2.70.1
 	sigs.k8s.io/controller-runtime v0.12.2-0.20220525133844-d15de977569f
