@@ -37,6 +37,20 @@ func (m *MockReconciler) EXPECT() *MockReconcilerMockRecorder {
 	return m.recorder
 }
 
+// DeleteNodeMetrics mocks base method.
+func (m *MockReconciler) DeleteNodeMetrics(ctx context.Context, dc *v1alpha1.DeviceConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteNodeMetrics", ctx, dc)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteNodeMetrics indicates an expected call of DeleteNodeMetrics.
+func (mr *MockReconcilerMockRecorder) DeleteNodeMetrics(ctx, dc interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNodeMetrics", reflect.TypeOf((*MockReconciler)(nil).DeleteNodeMetrics), ctx, dc)
+}
+
 // DeleteNodeMetricsDaemonSet mocks base method.
 func (m *MockReconciler) DeleteNodeMetricsDaemonSet(ctx context.Context, dc *v1alpha1.DeviceConfig) error {
 	m.ctrl.T.Helper()
@@ -63,6 +77,20 @@ func (m *MockReconciler) DeleteNodeMetricsService(ctx context.Context, dc *v1alp
 func (mr *MockReconcilerMockRecorder) DeleteNodeMetricsService(ctx, dc interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNodeMetricsService", reflect.TypeOf((*MockReconciler)(nil).DeleteNodeMetricsService), ctx, dc)
+}
+
+// ReconcileNodeMetrics mocks base method.
+func (m *MockReconciler) ReconcileNodeMetrics(ctx context.Context, dc *v1alpha1.DeviceConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReconcileNodeMetrics", ctx, dc)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReconcileNodeMetrics indicates an expected call of ReconcileNodeMetrics.
+func (mr *MockReconcilerMockRecorder) ReconcileNodeMetrics(ctx, dc interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileNodeMetrics", reflect.TypeOf((*MockReconciler)(nil).ReconcileNodeMetrics), ctx, dc)
 }
 
 // ReconcileNodeMetricsDaemonSet mocks base method.

@@ -52,6 +52,8 @@ const (
 //go:generate mockgen -source=node.go -package=node -destination=mock_node.go
 
 type Reconciler interface {
+	ReconcileNodeMetrics(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
+	DeleteNodeMetrics(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
 	ReconcileNodeMetricsDaemonSet(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
 	SetDesiredNodeMetricsDaemonSet(ds *appsv1.DaemonSet, cr *hlaiv1alpha1.DeviceConfig) error
 	DeleteNodeMetricsDaemonSet(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
@@ -74,6 +76,20 @@ func NewReconciler(c client.Client, s *runtime.Scheme) *NodeMetricsReconciler {
 
 func GetNodeMetricsName(cr *hlaiv1alpha1.DeviceConfig) string {
 	return fmt.Sprintf("%s-%s", cr.Name, nodeMetricsSuffix)
+}
+
+func (r *NodeMetricsReconciler) ReconcileNodeMetrics(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
+	err := r.ReconcileNodeMetricsDaemonSet(ctx, cr)
+	if err != nil {
+		return err
+	}
+
+	err = r.ReconcileNodeMetricsService(ctx, cr)
+	if err != nil {
+		return err
+	}
+
+	return setNodeMetricsConditions(r)
 }
 
 func (r *NodeMetricsReconciler) ReconcileNodeMetricsDaemonSet(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
@@ -107,7 +123,7 @@ func (r *NodeMetricsReconciler) ReconcileNodeMetricsDaemonSet(ctx context.Contex
 
 	logger.Info("Reconciled DaemonSet", "resource", ds.Name, "result", res)
 
-	return setNodeMetricsConditions(r)
+	return nil
 }
 
 func (r *NodeMetricsReconciler) ReconcileNodeMetricsService(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
@@ -143,6 +159,20 @@ func (r *NodeMetricsReconciler) ReconcileNodeMetricsService(ctx context.Context,
 	}
 
 	logger.Info("Reconciled Service", "resource", s.Name, "result", res)
+
+	return nil
+}
+
+func (r *NodeMetricsReconciler) DeleteNodeMetrics(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
+	err := r.DeleteNodeMetricsDaemonSet(ctx, cr)
+	if err != nil {
+		return err
+	}
+
+	err = r.DeleteNodeMetricsService(ctx, cr)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

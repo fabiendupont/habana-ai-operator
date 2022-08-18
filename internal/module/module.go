@@ -31,32 +31,26 @@ import (
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
-	kmmov1alpha1 "github.com/qbarrand/oot-operator/api/v1alpha1"
+	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
 )
 
 const (
 	moduleSuffix = "module"
 
-	driverHabanaServiceAccount = "driver-habana"
+	driverServiceAccount = "driver-habana"
 
-	driverHabanaSuffix         = "driver-habana"
-	driverHabanaLimitsCpu      = "100m"
-	driverHabanaLimitsMemory   = "100Mi"
-	driverHabanaRequestsCpu    = "100m"
-	driverHabanaRequestsMemory = "50Mi"
-
-	devicePluginSuffix         = "device-plugin"
 	devicePluginLimitsCpu      = "200m"
 	devicePluginLimitsMemory   = "100Mi"
 	devicePluginRequestsCpu    = "100m"
 	devicePluginRequestsMemory = "50Mi"
+	devicePluginServiceAccount = "device-plugin"
 )
 
 //go:generate mockgen -source=module.go -package=module -destination=mock_module.go
 
 type Reconciler interface {
 	ReconcileModule(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
-	SetDesiredModule(m *kmmov1alpha1.Module, cr *hlaiv1alpha1.DeviceConfig) error
+	SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alpha1.DeviceConfig) error
 	DeleteModule(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
 }
 
@@ -79,7 +73,7 @@ func GetModuleName(cr *hlaiv1alpha1.DeviceConfig) string {
 func (r *moduleReconciler) ReconcileModule(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
 	logger := log.FromContext(ctx)
 
-	existingModule := &kmmov1alpha1.Module{}
+	existingModule := &kmmv1beta1.Module{}
 	err := r.client.Get(ctx, types.NamespacedName{
 		Namespace: cr.Namespace,
 		Name:      GetModuleName(cr),
@@ -89,7 +83,7 @@ func (r *moduleReconciler) ReconcileModule(ctx context.Context, cr *hlaiv1alpha1
 		return err
 	}
 
-	m := &kmmov1alpha1.Module{
+	m := &kmmv1beta1.Module{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetModuleName(cr),
 			Namespace: cr.ObjectMeta.Namespace,
@@ -114,7 +108,7 @@ func (r *moduleReconciler) ReconcileModule(ctx context.Context, cr *hlaiv1alpha1
 }
 
 func (r *moduleReconciler) DeleteModule(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
-	m := &kmmov1alpha1.Module{
+	m := &kmmv1beta1.Module{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      GetModuleName(cr),
 			Namespace: cr.ObjectMeta.Namespace,
@@ -129,26 +123,20 @@ func (r *moduleReconciler) DeleteModule(ctx context.Context, cr *hlaiv1alpha1.De
 	return nil
 }
 
-func (r *moduleReconciler) SetDesiredModule(m *kmmov1alpha1.Module, cr *hlaiv1alpha1.DeviceConfig) error {
+func (r *moduleReconciler) SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alpha1.DeviceConfig) error {
 	if m == nil {
 		return errors.New("module cannot be nil")
 	}
 
-	driver := r.makeDriverHabanaContainer(cr)
-	devicePlugin := r.makeDevicePluginContainer(cr)
-	kernelMappings := r.makeKernelMappings(cr)
-	volumes := r.makeAdditionalVolumes(cr)
+	devicePlugin := r.makeDevicePlugin(cr)
+	ModuleLoader := r.makeModuleLoader(cr)
+	selector := cr.GetNodeSelector()
 
-	m.Spec = kmmov1alpha1.ModuleSpec{
-		KernelMappings:    kernelMappings,
-		DriverContainer:   driver,
-		DevicePlugin:      &devicePlugin,
-		AdditionalVolumes: volumes,
+	m.Spec = kmmv1beta1.ModuleSpec{
+		DevicePlugin: &devicePlugin,
+		ModuleLoader: ModuleLoader,
+		Selector:     selector,
 	}
-
-	m.Spec.Selector = cr.GetNodeSelector()
-
-	m.Spec.ServiceAccountName = driverHabanaServiceAccount
 
 	if err := ctrl.SetControllerReference(cr, m, r.scheme); err != nil {
 		return err
@@ -157,133 +145,55 @@ func (r *moduleReconciler) SetDesiredModule(m *kmmov1alpha1.Module, cr *hlaiv1al
 	return nil
 }
 
-func (r *moduleReconciler) makeDriverHabanaContainer(cr *hlaiv1alpha1.DeviceConfig) corev1.Container {
-	driver := corev1.Container{
-		Name: getDriverHabanaName(cr),
-	}
-
-	driver.Env = []corev1.EnvVar{
-		{
-			Name:  "DRIVER_VERSION",
-			Value: cr.Spec.DriverVersion,
-		},
-	}
-
-	driver.ImagePullPolicy = corev1.PullAlways
-
-	privileged := true
-	rkmmoUser := int64(0)
-	driver.SecurityContext = &corev1.SecurityContext{
-		Privileged: &privileged,
-		RunAsUser:  &rkmmoUser,
-		SELinuxOptions: &corev1.SELinuxOptions{
-			Level: "s0",
-		},
-	}
-
-	driver.Lifecycle = &corev1.Lifecycle{
-		PreStop: &corev1.LifecycleHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"/usr/bin/exitpoint",
+func (r *moduleReconciler) makeModuleLoader(cr *hlaiv1alpha1.DeviceConfig) kmmv1beta1.ModuleLoaderSpec {
+	moduleLoader := kmmv1beta1.ModuleLoaderSpec{
+		Container: kmmv1beta1.ModuleLoaderContainerSpec{
+			ImagePullPolicy: corev1.PullAlways,
+			KernelMappings:  r.makeKernelMappings(cr),
+			Modprobe: kmmv1beta1.ModprobeSpec{
+				ModuleName: "habanalabs",
+				Parameters: []string{
+					"fw_path_para=/var/lib/firmware",
 				},
 			},
 		},
+		ServiceAccountName: driverServiceAccount,
 	}
 
-	driver.ReadinessProbe = &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"sh",
-					"-c",
-					"lsmod | grep habanalabs",
-				},
-			},
-		},
-	}
-	driver.LivenessProbe = &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"sh",
-					"-c",
-					"lsmod | grep habanalabs",
-				},
-			},
-		},
-	}
-
-	driver.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			"cpu":    resource.MustParse(driverHabanaLimitsCpu),
-			"memory": resource.MustParse(driverHabanaLimitsMemory),
-		},
-		Requests: corev1.ResourceList{
-			"cpu":    resource.MustParse(driverHabanaRequestsCpu),
-			"memory": resource.MustParse(driverHabanaRequestsMemory),
-		},
-	}
-
-	mountPropagationBidirectional := corev1.MountPropagationBidirectional
-	driver.VolumeMounts = []corev1.VolumeMount{
-		{
-			Name:             "host-firmware",
-			MountPath:        "/var/lib/firmware",
-			MountPropagation: &mountPropagationBidirectional,
-		},
-	}
-
-	return driver
+	return moduleLoader
 }
 
-func (r *moduleReconciler) makeDevicePluginContainer(cr *hlaiv1alpha1.DeviceConfig) corev1.Container {
-	devicePlugin := corev1.Container{
-		Name: getDevicePluginName(cr),
-	}
-
-	devicePlugin.Args = []string{
-		"--dev_type",
-		"gaudi",
-	}
-
-	devicePlugin.Command = []string{
-		"habanalabs-device-plugin",
-	}
-
-	devicePlugin.Env = []corev1.EnvVar{
-		{Name: "LD_LIBRARY_PATH", Value: "/usr/lib/habanalabs"},
-	}
-
-	devicePlugin.Image = s.Settings.DevicePluginImage
-	devicePlugin.ImagePullPolicy = corev1.PullAlways
-
-	privileged := true
-	rkmmoUser := int64(0)
-	devicePlugin.SecurityContext = &corev1.SecurityContext{
-		Privileged: &privileged,
-		RunAsUser:  &rkmmoUser,
-		SELinuxOptions: &corev1.SELinuxOptions{
-			Level: "s0",
+func (r *moduleReconciler) makeDevicePlugin(cr *hlaiv1alpha1.DeviceConfig) kmmv1beta1.DevicePluginSpec {
+	devicePlugin := kmmv1beta1.DevicePluginSpec{
+		Container: kmmv1beta1.DevicePluginContainerSpec{
+			Args: []string{
+				"--dev_type",
+				"gaudi",
+			},
+			Command: []string{
+				"habanalabs-device-plugin",
+			},
+			Image:           s.Settings.DevicePluginImage,
+			ImagePullPolicy: corev1.PullAlways,
+			Resources: corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					"cpu":    resource.MustParse(devicePluginLimitsCpu),
+					"memory": resource.MustParse(devicePluginLimitsMemory),
+				},
+				Requests: corev1.ResourceList{
+					"cpu":    resource.MustParse(devicePluginRequestsCpu),
+					"memory": resource.MustParse(devicePluginRequestsMemory),
+				},
+			},
 		},
-	}
-
-	devicePlugin.Resources = corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			"cpu":    resource.MustParse(devicePluginLimitsCpu),
-			"memory": resource.MustParse(devicePluginLimitsMemory),
-		},
-		Requests: corev1.ResourceList{
-			"cpu":    resource.MustParse(devicePluginRequestsCpu),
-			"memory": resource.MustParse(devicePluginRequestsMemory),
-		},
+		ServiceAccountName: devicePluginServiceAccount,
 	}
 
 	return devicePlugin
 }
 
-func (r *moduleReconciler) makeKernelMappings(cr *hlaiv1alpha1.DeviceConfig) []kmmov1alpha1.KernelMapping {
-	kernelMappings := []kmmov1alpha1.KernelMapping{
+func (r *moduleReconciler) makeKernelMappings(cr *hlaiv1alpha1.DeviceConfig) []kmmv1beta1.KernelMapping {
+	kernelMappings := []kmmv1beta1.KernelMapping{
 		{
 			ContainerImage: fmt.Sprintf("%s:%s-${KERNEL_FULL_VERSION}", cr.Spec.DriverImage, cr.Spec.DriverVersion),
 			Regexp:         `^.*\.el\d_?\d?\..*$`,
@@ -291,32 +201,4 @@ func (r *moduleReconciler) makeKernelMappings(cr *hlaiv1alpha1.DeviceConfig) []k
 	}
 
 	return kernelMappings
-}
-
-func (r *moduleReconciler) makeAdditionalVolumes(cr *hlaiv1alpha1.DeviceConfig) []corev1.Volume {
-	hostPathTypeDirectoryOrCreate := corev1.HostPathDirectoryOrCreate
-	volumes := []corev1.Volume{
-		// We cannot mount the /usr/lib/firmware filesystem from the
-		// host to copy the firmware, because it's read-only. Instead
-		// we copy it in /var/lib/firmware that is configured as a
-		// alternative search path on the node.
-		{
-			Name: "host-firmware",
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/var/lib/firmware",
-					Type: &hostPathTypeDirectoryOrCreate,
-				},
-			},
-		},
-	}
-	return volumes
-}
-
-func getDriverHabanaName(cr *hlaiv1alpha1.DeviceConfig) string {
-	return fmt.Sprintf("%s-%s", cr.Name, driverHabanaSuffix)
-}
-
-func getDevicePluginName(cr *hlaiv1alpha1.DeviceConfig) string {
-	return fmt.Sprintf("%s-%s", cr.Name, devicePluginSuffix)
 }

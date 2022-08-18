@@ -10,7 +10,7 @@ import (
 
 	v1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
-	v1alpha10 "github.com/qbarrand/oot-operator/api/v1alpha1"
+	v1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
 )
 
 // MockReconciler is a mock of Reconciler interface.
@@ -65,7 +65,7 @@ func (mr *MockReconcilerMockRecorder) ReconcileModule(ctx, dc interface{}) *gomo
 }
 
 // SetDesiredModule mocks base method.
-func (m_2 *MockReconciler) SetDesiredModule(m *v1alpha10.Module, cr *v1alpha1.DeviceConfig) error {
+func (m_2 *MockReconciler) SetDesiredModule(m *v1beta1.Module, cr *v1alpha1.DeviceConfig) error {
 	m_2.ctrl.T.Helper()
 	ret := m_2.ctrl.Call(m_2, "SetDesiredModule", m, cr)
 	ret0, _ := ret[0].(error)

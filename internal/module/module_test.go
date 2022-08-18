@@ -30,7 +30,7 @@ import (
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	mockClient "github.com/HabanaAI/habana-ai-operator/internal/client"
-	kmmov1alpha1 "github.com/qbarrand/oot-operator/api/v1alpha1"
+	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
 )
 
 const (
@@ -60,7 +60,7 @@ var _ = Describe("ModuleReconciler", func() {
 
 		s := scheme.Scheme
 		Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
-		Expect(kmmov1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+		Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 		r = NewReconciler(c, s)
 
 		ctx = context.TODO()
@@ -155,7 +155,7 @@ var _ = Describe("ModuleReconciler", func() {
 
 	Describe("SetDesiredModule", func() {
 		var (
-			m *kmmov1alpha1.Module
+			m *kmmv1beta1.Module
 		)
 
 		Context("with a nil Module as input", func() {
@@ -177,7 +177,7 @@ var _ = Describe("ModuleReconciler", func() {
 				dc.Spec.DriverImage = testDriverImage
 				dc.Spec.DriverVersion = testDriverVersion
 
-				m = &kmmov1alpha1.Module{
+				m = &kmmv1beta1.Module{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "a-name",
 						Namespace: "a-namespace",
@@ -197,43 +197,31 @@ var _ = Describe("ModuleReconciler", func() {
 					Expect(v).To(Equal(testLabelValue))
 				})
 
-				It("should contain the correct KernelMappings", func() {
-					Expect(m.Spec.KernelMappings).ToNot(BeNil())
-					Expect(m.Spec.KernelMappings).To(HaveLen(1))
+				It("should have the correct ModuleLoader", func() {
+					Expect(m.Spec.ModuleLoader).ToNot(BeNil())
 
+					Expect(m.Spec.ModuleLoader.Container.ImagePullPolicy).To(Equal(corev1.PullAlways))
+
+					Expect(m.Spec.ModuleLoader.Container.KernelMappings).ToNot(BeNil())
+					Expect(m.Spec.ModuleLoader.Container.KernelMappings).To(HaveLen(1))
 					expectedImage := fmt.Sprintf("%s:%s-${KERNEL_FULL_VERSION}", testDriverImage, testDriverVersion)
-					Expect(m.Spec.KernelMappings[0].ContainerImage).To(Equal(expectedImage))
-				})
+					Expect(m.Spec.ModuleLoader.Container.KernelMappings[0].ContainerImage).To(Equal(expectedImage))
 
-				It("should have the correct DriverContainer", func() {
-					Expect(m.Spec.DriverContainer).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.Lifecycle).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.Lifecycle.PreStop).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.ReadinessProbe).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.LivenessProbe).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.Env).ToNot(BeNil())
-					Expect(m.Spec.DriverContainer.ImagePullPolicy).To(Equal(corev1.PullAlways))
-					Expect(m.Spec.DriverContainer.VolumeMounts).To(HaveLen(1))
-					Expect(m.Spec.DriverContainer.VolumeMounts[0].Name).To(Equal("host-firmware"))
-					Expect(*m.Spec.DriverContainer.SecurityContext.Privileged).To(BeTrue())
-					Expect(*m.Spec.DriverContainer.SecurityContext.RunAsUser).To(BeZero())
+					Expect(m.Spec.ModuleLoader.Container.Modprobe).ToNot(BeNil())
+					Expect(m.Spec.ModuleLoader.Container.Modprobe.ModuleName).To(Equal("habanalabs"))
+					modprobeParameters := []string{
+						"fw_path_para=/var/lib/firmware",
+					}
+					Expect(m.Spec.ModuleLoader.Container.Modprobe.Parameters).To(Equal(modprobeParameters))
+
+					Expect(m.Spec.ModuleLoader.ServiceAccountName).To(Equal(driverServiceAccount))
 				})
 
 				It("should have a correct DevicePlugin", func() {
 					Expect(m.Spec.DevicePlugin).ToNot(BeNil())
-					Expect(m.Spec.DevicePlugin.Resources).ToNot(BeNil())
-					Expect(m.Spec.DevicePlugin.Env).ToNot(BeNil())
-					Expect(m.Spec.DevicePlugin.ImagePullPolicy).To(Equal(corev1.PullAlways))
-				})
-
-				It("should have the correct SA", func() {
-					Expect(m.Spec.ServiceAccountName).To(Equal(driverHabanaServiceAccount))
-				})
-
-				It("should have the correct AdditionalVolumes", func() {
-					Expect(m.Spec.AdditionalVolumes).ToNot(BeNil())
-					Expect(m.Spec.AdditionalVolumes).To(HaveLen(1))
-					Expect(m.Spec.AdditionalVolumes[0].Name).To(Equal("host-firmware"))
+					Expect(m.Spec.DevicePlugin.Container).ToNot(BeNil())
+					Expect(m.Spec.DevicePlugin.Container.Image).ToNot(BeNil())
+					Expect(m.Spec.DevicePlugin.ServiceAccountName).To(Equal(devicePluginServiceAccount))
 				})
 			})
 		})
