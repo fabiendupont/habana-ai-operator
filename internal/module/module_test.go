@@ -30,7 +30,7 @@ import (
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	mockClient "github.com/HabanaAI/habana-ai-operator/internal/client"
-	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
+	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 )
 
 const (

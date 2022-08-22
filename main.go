@@ -33,7 +33,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
+	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	"github.com/HabanaAI/habana-ai-operator/controllers"

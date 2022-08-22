@@ -31,7 +31,7 @@ import (
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
-	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
+	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 )
 
 const (

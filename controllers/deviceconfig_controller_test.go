@@ -38,7 +38,7 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/metrics/node"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
-	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
+	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 )
 
 const (

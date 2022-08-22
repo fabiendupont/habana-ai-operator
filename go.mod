@@ -4,10 +4,10 @@ go 1.17
 
 require (
 	github.com/golang/mock v1.6.0
+	github.com/kubernetes-sigs/kernel-module-management v0.0.0-20220817101531-9b0f18855669
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.20.0
 	github.com/prometheus/client_golang v1.13.0
-	github.com/rh-ecosystem-edge/kernel-module-management v0.0.0-20220817101531-9b0f18855669
 	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
@@ -16,7 +16,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.3
 )
 
-replace github.com/rh-ecosystem-edge/kernel-module-management => github.com/qbarrand/oot-operator v0.0.0-20220822091522-4ccc0fa682ce
+replace github.com/kubernetes-sigs/kernel-module-management => github.com/qbarrand/oot-operator v0.0.0-20220822091522-4ccc0fa682ce
 
 require (
 	cloud.google.com/go v0.93.3 // indirect
