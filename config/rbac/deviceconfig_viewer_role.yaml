@@ -5,7 +5,7 @@ metadata:
   name: deviceconfig-viewer-role
 rules:
 - apiGroups:
-  - gaudi.habana.ai
+  - habana.ai
   resources:
   - deviceconfigs
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - gaudi.habana.ai
+  - habana.ai
   resources:
   - deviceconfigs/status
   verbs:

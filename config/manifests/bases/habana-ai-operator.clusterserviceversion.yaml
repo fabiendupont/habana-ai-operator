@@ -23,7 +23,7 @@ spec:
     - description: DeviceConfig is the Schema for the deviceconfigs API
       displayName: Device Config
       kind: DeviceConfig
-      name: deviceconfigs.gaudi.habana.ai
+      name: deviceconfigs.habana.ai
       version: v1alpha1
   description: |
     Kubernetes provides access to accelerators such as Habana Labs AI accelerators and other devices through the [Device Plugin framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/). However, configuring and managing nodes with these hardware resources requires configuration of multiple software components such as drivers, container runtimes or other libraries which are difficult and prone to errors.
@@ -54,7 +54,6 @@ spec:
   - habanalabs
   - hardware
   - driver
-  - gaudi
   links:
   - name: Habana AI Operator Documentation
     url: https://habana.ai/docs/habana-ai-operator/index.html

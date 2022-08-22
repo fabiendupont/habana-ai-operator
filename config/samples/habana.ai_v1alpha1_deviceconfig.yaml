@@ -1,7 +1,7 @@
-apiVersion: gaudi.habana.ai/v1alpha1
+apiVersion: habana.ai/v1alpha1
 kind: DeviceConfig
 metadata:
-  name: deviceconfig-gaudi
+  name: deviceconfig-sample
 spec:
   driverImage: ghcr.io/fabiendupont/habana-ai-driver
   driverVersion: 1.6.0-439

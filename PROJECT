@@ -12,7 +12,7 @@ resources:
     namespaced: true
   controller: true
   domain: habana.ai
-  group: gaudi
+  group: ""
   kind: DeviceConfig
   path: github.com/HabanaAI/habana-ai-operator/api/v1alpha1
   version: v1alpha1

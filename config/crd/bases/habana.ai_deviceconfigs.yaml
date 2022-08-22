@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: deviceconfigs.gaudi.habana.ai
+  name: deviceconfigs.habana.ai
 spec:
-  group: gaudi.habana.ai
+  group: habana.ai
   names:
     kind: DeviceConfig
     listKind: DeviceConfigList
