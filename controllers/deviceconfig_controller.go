@@ -28,12 +28,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kmmov1alpha1 "github.com/qbarrand/oot-operator/api/v1alpha1"
+	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/metrics"
+	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/metrics/node"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
@@ -45,7 +46,8 @@ type Reconciler struct {
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 
-	mr module.Reconciler
+	mr  module.Reconciler
+	nmr nodeMetrics.Reconciler
 
 	fu finalizers.Updater
 	cu conditions.Updater
@@ -58,6 +60,7 @@ func NewReconciler(
 	scheme *runtime.Scheme,
 	recorder record.EventRecorder,
 	mr module.Reconciler,
+	nmr nodeMetrics.Reconciler,
 	fu finalizers.Updater,
 	cu conditions.Updater,
 	nsv NodeSelectorValidator,
@@ -67,6 +70,7 @@ func NewReconciler(
 		Scheme:   scheme,
 		Recorder: recorder,
 		mr:       mr,
+		nmr:      nmr,
 		fu:       fu,
 		cu:       cu,
 		nsv:      nsv,
@@ -143,6 +147,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
+	if err = r.nmr.ReconcileNodeMetrics(ctx, deviceConfig); err != nil {
+		if cerr := r.cu.SetConditionsErrored(ctx, deviceConfig, conditions.ReasonNodeMetricsFailed, err.Error()); cerr != nil {
+			err = fmt.Errorf("%s: %w", err.Error(), cerr)
+		}
+		metrics.ReconciliationFailed.WithLabelValues(deviceConfig.Name).Set(1)
+		return ctrl.Result{}, err
+	}
+
 	metrics.ReconciliationFailed.WithLabelValues(deviceConfig.Name).Set(0)
 
 	r.Recorder.Event(
@@ -164,7 +176,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("device-config").
 		For(&hlaiv1alpha1.DeviceConfig{}).
-		Owns(&kmmov1alpha1.Module{}).
+		Owns(&kmmv1beta1.Module{}).
 		Named("deviceconfig").
 		Complete(r)
 }

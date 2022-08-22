@@ -33,12 +33,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
-	kmmov1alpha1 "github.com/qbarrand/oot-operator/api/v1alpha1"
+	kmmv1beta1 "github.com/rh-ecosystem-edge/kernel-module-management/api/v1beta1"
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	"github.com/HabanaAI/habana-ai-operator/controllers"
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
+	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/metrics/node"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
 	//+kubebuilder:scaffold:imports
 )
@@ -54,7 +55,7 @@ func init() {
 	utilruntime.Must(hlaiv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
-	utilruntime.Must(kmmov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kmmv1beta1.AddToScheme(scheme))
 }
 
 func getWatchNamespace() (string, error) {
@@ -117,10 +118,11 @@ func main() {
 	s := mgr.GetScheme()
 
 	mr := module.NewReconciler(c, s)
+	nmr := nodeMetrics.NewReconciler(c, s)
 	fu := finalizers.NewUpdater(c)
 	cu := conditions.NewUpdater(c)
 	nsv := controllers.NewNodeSelectorValidator(c)
-	dcc := controllers.NewReconciler(c, s, mgr.GetEventRecorderFor("deviceconfig-controller"), mr, fu, cu, nsv)
+	dcc := controllers.NewReconciler(c, s, mgr.GetEventRecorderFor("deviceconfig-controller"), mr, nmr, fu, cu, nsv)
 
 	if err := dcc.SetupWithManager(mgr); err != nil {
 		setupLogger.Error(err, "unable to create controller", "controller", "DeviceConfig")
