@@ -14,7 +14,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - gaudi.habana.ai
+  - habana.ai
   resources:
   - deviceconfigs
   verbs:
@@ -26,13 +26,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - gaudi.habana.ai
+  - habana.ai
   resources:
   - deviceconfigs/finalizers
   verbs:
   - update
 - apiGroups:
-  - gaudi.habana.ai
+  - habana.ai
   resources:
   - deviceconfigs/status
   verbs:
@@ -40,7 +40,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ooto.sigs.k8s.io
+  - kmm.sigs.k8s.io
   resources:
   - modules
   verbs:

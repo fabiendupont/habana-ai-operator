@@ -77,10 +77,10 @@ func NewReconciler(
 	}
 }
 
-//+kubebuilder:rbac:groups=gaudi.habana.ai,resources=deviceconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=gaudi.habana.ai,resources=deviceconfigs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=gaudi.habana.ai,resources=deviceconfigs/finalizers,verbs=update
-//+kubebuilder:rbac:groups="ooto.sigs.k8s.io",resources=modules,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=habana.ai,resources=deviceconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=habana.ai,resources=deviceconfigs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=habana.ai,resources=deviceconfigs/finalizers,verbs=update
+//+kubebuilder:rbac:groups="kmm.sigs.k8s.io",resources=modules,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

@@ -12,3 +12,7 @@ spec:
     resources:
       limits:
         habana.ai/gaudi: "1"
+    securityContext:
+      capabilities:
+        add:
+          - "SYS_RAWIO"
