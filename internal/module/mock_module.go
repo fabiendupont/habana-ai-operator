@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
+	v1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
-	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
+	v1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 )
 
 // MockReconciler is a mock of Reconciler interface.
@@ -37,7 +37,7 @@ func (m *MockReconciler) EXPECT() *MockReconcilerMockRecorder {
 }
 
 // DeleteModule mocks base method.
-func (m *MockReconciler) DeleteModule(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error {
+func (m *MockReconciler) DeleteModule(ctx context.Context, dc *v1alpha1.DeviceConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteModule", ctx, dc)
 	ret0, _ := ret[0].(error)
@@ -51,7 +51,7 @@ func (mr *MockReconcilerMockRecorder) DeleteModule(ctx, dc interface{}) *gomock.
 }
 
 // ReconcileModule mocks base method.
-func (m *MockReconciler) ReconcileModule(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error {
+func (m *MockReconciler) ReconcileModule(ctx context.Context, dc *v1alpha1.DeviceConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReconcileModule", ctx, dc)
 	ret0, _ := ret[0].(error)
@@ -65,7 +65,7 @@ func (mr *MockReconcilerMockRecorder) ReconcileModule(ctx, dc interface{}) *gomo
 }
 
 // SetDesiredModule mocks base method.
-func (m_2 *MockReconciler) SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alpha1.DeviceConfig) error {
+func (m_2 *MockReconciler) SetDesiredModule(m *v1beta1.Module, cr *v1alpha1.DeviceConfig) error {
 	m_2.ctrl.T.Helper()
 	ret := m_2.ctrl.Call(m_2, "SetDesiredModule", m, cr)
 	ret0, _ := ret[0].(error)

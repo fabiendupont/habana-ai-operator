@@ -209,10 +209,10 @@ var _ = Describe("ModuleReconciler", func() {
 
 					Expect(m.Spec.ModuleLoader.Container.Modprobe).ToNot(BeNil())
 					Expect(m.Spec.ModuleLoader.Container.Modprobe.ModuleName).To(Equal("habanalabs"))
-					modprobeParameters := []string{
-						"fw_path_para=/var/lib/firmware",
-					}
-					Expect(m.Spec.ModuleLoader.Container.Modprobe.Parameters).To(Equal(modprobeParameters))
+					//					modprobeParameters := []string{
+					//						"fw_path_para=/var/lib/firmware",
+					//					}
+					//					Expect(m.Spec.ModuleLoader.Container.Modprobe.Parameters).To(Equal(modprobeParameters))
 
 					Expect(m.Spec.ModuleLoader.ServiceAccountName).To(Equal(driverServiceAccount))
 				})
