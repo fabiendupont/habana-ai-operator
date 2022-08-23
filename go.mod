@@ -16,7 +16,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.3
 )
 
-replace github.com/kubernetes-sigs/kernel-module-management => github.com/qbarrand/oot-operator v0.0.0-20220822091522-4ccc0fa682ce
+//replace github.com/kubernetes-sigs/kernel-module-management => github.com/qbarrand/oot-operator v0.0.0-20220822091522-4ccc0fa682ce
+replace github.com/kubernetes-sigs/kernel-module-management => /home/fdupont/Code/github.com/qbarrand/oot-operator
 
 require (
 	cloud.google.com/go v0.93.3 // indirect
