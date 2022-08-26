@@ -183,6 +183,38 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(res.Requeue).To(BeFalse())
 				})
 			})
+
+			Context("that does not contain a finalizer", func() {
+				When("an add finalizer error occurs", func() {
+					BeforeEach(func() {
+						s := scheme.Scheme
+						Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+						Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+						gomock.InOrder(
+							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									d.ObjectMeta = dc.ObjectMeta
+									d.Spec = dc.Spec
+									return nil
+								},
+							),
+							nsv.EXPECT().CheckDeviceConfigForConflictingNodeSelector(ctx, dc).Return(nil),
+							fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
+							fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(errors.New("some-error")),
+						)
+					})
+
+					It("should return the respective error", func() {
+						res, err := r.Reconcile(ctx, req)
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("some-error"))
+						Expect(res.Requeue).To(BeFalse())
+					})
+				})
+			})
 		})
 
 		Context("with a NodeSelectorConflictErrored DeviceConfig", func() {
