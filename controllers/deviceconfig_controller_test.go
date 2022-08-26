@@ -262,32 +262,98 @@ var _ = Describe("DeviceConfigReconciler", func() {
 			})
 
 			Context("which contains a deletion finalizer", func() {
-				It("should delete all resources", func() {
-					s := scheme.Scheme
-					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
-					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+				Context("and a deletion error occurs", func() {
+					It("should return an error", func() {
+						s := scheme.Scheme
+						Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+						Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					gomock.InOrder(
-						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
-								d.ObjectMeta = dc.ObjectMeta
-								d.Spec = dc.Spec
-								return nil
-							},
-						),
-					)
+						gomock.InOrder(
+							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									d.ObjectMeta = dc.ObjectMeta
+									d.Spec = dc.Spec
+									return nil
+								},
+							),
+						)
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
 
-					gomock.InOrder(
-						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
-						mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
-						fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(nil),
-					)
+						gomock.InOrder(
+							fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+							mr.EXPECT().DeleteModule(ctx, dc).Return(errors.New("something went wrong")),
+						)
 
-					res, err := r.Reconcile(ctx, req)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(res.Requeue).To(BeFalse())
+						res, err := r.Reconcile(ctx, req)
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(And(
+							ContainSubstring("failed to delete DeviceConfig resources"),
+							ContainSubstring("something went wrong")))
+						Expect(res.Requeue).To(BeFalse())
+					})
+				})
+
+				Context("and no deletion error occurs", func() {
+					Context("and no remove finalizer error occurs", func() {
+						It("should not requeue or return an error", func() {
+							s := scheme.Scheme
+							Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+							Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+							gomock.InOrder(
+								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+										d.ObjectMeta = dc.ObjectMeta
+										d.Spec = dc.Spec
+										return nil
+									},
+								),
+							)
+
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+
+							gomock.InOrder(
+								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+								mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
+								fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(nil),
+							)
+
+							res, err := r.Reconcile(ctx, req)
+							Expect(err).ToNot(HaveOccurred())
+							Expect(res.Requeue).To(BeFalse())
+						})
+					})
+
+					Context("and a remove finalizer error occurs", func() {
+						It("should not requeue and return an error", func() {
+							s := scheme.Scheme
+							Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+							Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+							gomock.InOrder(
+								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+										d.ObjectMeta = dc.ObjectMeta
+										d.Spec = dc.Spec
+										return nil
+									},
+								),
+							)
+
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+
+							gomock.InOrder(
+								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+								mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
+								fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(errors.New("some error")),
+							)
+
+							res, err := r.Reconcile(ctx, req)
+							Expect(err).To(HaveOccurred())
+							Expect(res.Requeue).To(BeFalse())
+						})
+					})
 				})
 			})
 
