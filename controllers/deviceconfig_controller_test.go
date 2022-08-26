@@ -23,7 +23,9 @@ import (
 	"time"
 
 	gomock "github.com/golang/mock/gomock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	record "k8s.io/client-go/tools/record"
@@ -76,6 +78,46 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				cu = conditions.NewMockUpdater(gCtrl)
 				nsv = NewMockNodeSelectorValidator(gCtrl)
 				c = client.NewMockClient(gCtrl)
+			})
+
+			When("a client not-found error occurs", func() {
+				BeforeEach(func() {
+					s := scheme.Scheme
+
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+					gomock.InOrder(
+						c.EXPECT().
+							Get(ctx, req.NamespacedName, gomock.Any()).
+							Return(apierrors.NewNotFound(schema.GroupResource{Resource: "deviceconfigs"}, testDeviceConfigName)),
+					)
+				})
+
+				It("should not requeue or return an error", func() {
+					res, err := r.Reconcile(ctx, req)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(res.Requeue).To(BeFalse())
+				})
+			})
+
+			When("a client generic error occurs", func() {
+				BeforeEach(func() {
+					s := scheme.Scheme
+
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+					gomock.InOrder(
+						c.EXPECT().
+							Get(ctx, req.NamespacedName, gomock.Any()).
+							Return(apierrors.NewServiceUnavailable("Service unavailable")),
+					)
+				})
+
+				It("should not requeue and return an error", func() {
+					res, err := r.Reconcile(ctx, req)
+					Expect(err).To(HaveOccurred())
+					Expect(res.Requeue).To(BeFalse())
+				})
 			})
 
 			When("no client error occurs", func() {
