@@ -18,20 +18,22 @@ package node
 
 import (
 	"context"
-	"testing"
+	"errors"
 
-	"github.com/stretchr/testify/assert"
+	gomock "github.com/golang/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	hlaiv1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
+	"github.com/HabanaAI/habana-ai-operator/internal/client"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
 
@@ -39,159 +41,369 @@ const (
 	testLabelKey = "label"
 
 	testLabelValue = "test"
-
-	testNFDLabelKey = "feature.node.kubernetes.io/pci-1da3.present"
 )
 
-func TestNodeMetricsReconciler_ReconcileNodeMetricsDaemonSet(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	ds := &appsv1.DaemonSet{}
+var _ = Describe("NodeMetricsReconciler", func() {
+	var (
+		dc  *hlaiv1alpha1.DeviceConfig
+		r   *NodeMetricsReconciler
+		c   *client.MockClient
+		ctx context.Context
+	)
 
-	// check that resource is created
-	assert.NoError(t, r.ReconcileNodeMetricsDaemonSet(context.TODO(), dc))
-	assert.NoError(t, r.client.Get(context.TODO(), types.NamespacedName{Name: GetNodeMetricsName(dc)}, ds))
+	BeforeEach(func() {
+		dc = &hlaiv1alpha1.DeviceConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "a-device-config",
+				Namespace: "a-namespace",
+			},
+		}
+		c = client.NewMockClient(gomock.NewController(GinkgoT()))
 
-	// check that resource is updated
+		s := scheme.Scheme
+		Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 
-	// test that the nodeSelector is applied correctly
-	ns := map[string]string{testLabelKey: testLabelValue}
-	dc.Spec.NodeSelector = ns
-	assert.NoError(t, r.ReconcileNodeMetricsDaemonSet(context.TODO(), dc))
-	assert.NoError(t, r.client.Get(context.TODO(), types.NamespacedName{Name: ds.Name}, ds))
+		r = NewReconciler(c, s)
 
-	// check that it contains the specified selector
-	v, contains := ds.Spec.Template.Spec.NodeSelector[testLabelKey]
-	assert.True(t, contains)
-	assert.Equal(t, testLabelValue, v)
+		ctx = context.TODO()
+	})
 
-	// check that it does not contain the default NFD selector
-	assert.NotContains(t, ds.Spec.Template.Spec.NodeSelector, testNFDLabelKey)
-}
+	Describe("ReconcileNodeMetrics", func() {
+	})
 
-func TestNodeMetricsReconciler_DeleteNodeMetricsDaemonSet(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	ds := &appsv1.DaemonSet{}
+	Describe("ReconcileNodeMetricsDaemonSet", func() {
+		Context("with no client Get error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().
+						Get(ctx, gomock.Any(), gomock.Any()).
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, GetNodeMetricsName(dc))).
+						AnyTimes(),
+				)
+			})
 
-	// test that resource is created
-	assert.NoError(t, r.ReconcileNodeMetricsDaemonSet(context.TODO(), dc))
-	assert.NoError(t, r.client.Get(context.TODO(), types.NamespacedName{Name: GetNodeMetricsName(dc)}, ds))
+			Context("with no client Create error", func() {
+				BeforeEach(func() {
+					gomock.InOrder(
+						c.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+					)
+				})
 
-	// test that resource is deleted
-	assert.NoError(t, r.DeleteNodeMetricsDaemonSet(context.TODO(), dc))
+				It("should not return an error", func() {
+					Expect(r.ReconcileNodeMetricsDaemonSet(ctx, dc)).ToNot(HaveOccurred())
+				})
+			})
 
-	nodeMetricsDaemonSet := &appsv1.DaemonSet{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: ds.Name}, nodeMetricsDaemonSet)
-	if !apierrors.IsNotFound(err) {
-		t.Fatalf("expected not found error, got %#v\n", err)
-	}
-}
+			Context("with client Create error", func() {
+				BeforeEach(func() {
+					gomock.InOrder(
+						c.EXPECT().Create(ctx, gomock.Any()).Return(errors.New("some-error")),
+					)
+				})
 
-func TestNodeMetricsReconciler_ReconcileNodeMetricsService(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	s := &corev1.Service{}
+				It("should return an error", func() {
+					Expect(r.ReconcileNodeMetricsDaemonSet(ctx, dc)).To(HaveOccurred())
+				})
+			})
+		})
 
-	assert.NoError(t, r.ReconcileNodeMetricsService(context.TODO(), dc))
-	assert.NoError(t, r.client.Get(context.TODO(), types.NamespacedName{Name: GetNodeMetricsName(dc)}, s))
-	assert.Equal(t, GetNodeMetricsName(dc), s.Name)
-}
+		Context("with client Get error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(errors.New("some-other-that-not-found-error")),
+				)
+			})
 
-func TestNodeMetricsReconciler_DeleteNodeMetricsService(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	s := &corev1.Service{}
+			It("should return an error", func() {
+				Expect(r.ReconcileNodeMetricsDaemonSet(ctx, dc)).To(HaveOccurred())
+			})
+		})
+	})
 
-	// test that resource is created
-	assert.NoError(t, r.ReconcileNodeMetricsService(context.TODO(), dc))
-	assert.NoError(t, r.client.Get(context.TODO(), types.NamespacedName{Name: GetNodeMetricsName(dc)}, s))
+	Describe("ReconcileNodeMetricsService", func() {
+		Context("with no client Get error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().
+						Get(ctx, gomock.Any(), gomock.Any()).
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "services"}, GetNodeMetricsName(dc))).
+						AnyTimes(),
+				)
+			})
 
-	// test that resource is deleted
-	assert.NoError(t, r.DeleteNodeMetricsService(context.TODO(), dc))
+			Context("with no client Create error", func() {
+				BeforeEach(func() {
+					gomock.InOrder(
+						c.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+					)
+				})
+				It("should not return an error", func() {
+					Expect(r.ReconcileNodeMetricsService(ctx, dc)).ToNot(HaveOccurred())
+				})
+			})
 
-	nodeMetricsService := &corev1.Service{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: s.Name}, nodeMetricsService)
-	if !apierrors.IsNotFound(err) {
-		t.Fatalf("expected not found error, got %#v\n", err)
-	}
-}
+			Context("with client Create error", func() {
+				BeforeEach(func() {
+					gomock.InOrder(
+						c.EXPECT().Create(ctx, gomock.Any()).Return(errors.New("some-error")),
+					)
+				})
+				It("should return an error", func() {
+					Expect(r.ReconcileNodeMetricsService(ctx, dc)).To(HaveOccurred())
+				})
+			})
+		})
 
-func TestNodeMetricsReconciler_SetDesiredNodeMetricsDaemonSet(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	ds := &appsv1.DaemonSet{}
+		Context("with client Get error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(errors.New("some-other-that-not-found-error")),
+				)
+			})
 
-	err := r.SetDesiredNodeMetricsDaemonSet(ds, dc)
-	assert.NoError(t, err)
+			It("should return an error", func() {
+				Expect(r.ReconcileNodeMetricsService(ctx, dc)).To(HaveOccurred())
+			})
+		})
+	})
 
-	// test that the DaemonSet's service account it the predefined one
-	assert.Equal(t, nodeMetricsServiceAccount, ds.Spec.Template.Spec.ServiceAccountName)
+	Describe("DeleteNodeMetricsDaemonSet", func() {
+		Context("without a client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Delete(ctx, gomock.Any()).Return(nil),
+				)
+			})
 
-	// test that the DaemonSet's HostPID is enabled
-	assert.True(t, ds.Spec.Template.Spec.HostPID)
+			It("should not return an error", func() {
+				Expect(r.DeleteNodeMetricsDaemonSet(ctx, dc)).ToNot(HaveOccurred())
+			})
+		})
 
-	// test that nodeMetrics container is specified
-	assert.Len(t, ds.Spec.Template.Spec.Containers, 1)
+		Context("with a NotFound client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().
+						Delete(ctx, gomock.Any()).
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, GetNodeMetricsName(dc))),
+				)
+			})
 
-	assert.Len(t, ds.Spec.Template.Spec.Volumes, 1)
+			It("should not return an error", func() {
+				Expect(r.DeleteNodeMetricsDaemonSet(ctx, dc)).ToNot(HaveOccurred())
+			})
+		})
 
-	// Without a NodeSelector defined in the CR, check if the default NFD label
-	// is included in the NodeSelector.
-	assert.Contains(t, ds.Spec.Template.Spec.NodeSelector, testNFDLabelKey)
-}
+		Context("with a generic client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Delete(ctx, gomock.Any()).Return(errors.New("some-error")),
+				)
+			})
 
-func TestNodeMetricsReconciler_SetDesiredNodeMetricsService(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
-	service := &corev1.Service{}
+			It("should return an error", func() {
+				Expect(r.DeleteNodeMetricsDaemonSet(ctx, dc)).To(HaveOccurred())
+			})
+		})
+	})
 
-	err := r.SetDesiredNodeMetricsService(service, dc)
-	assert.NoError(t, err)
+	Describe("DeleteNodeMetricsService", func() {
+		Context("without a client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Delete(ctx, gomock.Any()).Return(nil),
+				)
+			})
 
-	assert.NotNil(t, service.Spec.Ports)
-	assert.Len(t, service.Spec.Ports, 1)
-	assert.EqualValues(t, nodeMetricsPort, service.Spec.Ports[0].Port)
-	assert.Equal(t, intstr.FromInt(nodeMetricsPort), service.Spec.Ports[0].TargetPort)
-	assert.Equal(t, corev1.ProtocolTCP, service.Spec.Ports[0].Protocol)
-	assert.Contains(t, service.Annotations, "prometheus.io/scrape")
-}
+			It("should not return an error", func() {
+				Expect(r.DeleteNodeMetricsService(ctx, dc)).ToNot(HaveOccurred())
+			})
+		})
 
-func TestNodeMetricsReconciler_makeNodeMetricsContainer(t *testing.T) {
-	dc := makeTestDeviceConfig()
-	r := makeTestReconciler(t, dc)
+		Context("with a NotFound client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().
+						Delete(ctx, gomock.Any()).
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "services"}, GetNodeMetricsName(dc))),
+				)
+			})
 
-	nodeMetrics := r.makeNodeMetricsContainer(dc)
+			It("should not return an error", func() {
+				Expect(r.DeleteNodeMetricsService(ctx, dc)).ToNot(HaveOccurred())
+			})
+		})
 
-	assert.Equal(t, nodeMetricsSuffix, nodeMetrics.Name)
-	assert.Equal(t, s.Settings.NodeMetricsImage, nodeMetrics.Image)
-	assert.Equal(t, corev1.PullAlways, nodeMetrics.ImagePullPolicy)
-	assert.True(t, *nodeMetrics.SecurityContext.Privileged)
-	assert.NotNil(t, nodeMetrics.Ports)
-	assert.NotNil(t, nodeMetrics.Resources)
-	assert.Len(t, nodeMetrics.VolumeMounts, 1)
-}
+		Context("with a generic client Delete error", func() {
+			BeforeEach(func() {
+				gomock.InOrder(
+					c.EXPECT().Delete(ctx, gomock.Any()).Return(errors.New("some-error")),
+				)
+			})
 
-func makeTestDeviceConfig() *hlaiv1alpha1.DeviceConfig {
-	c := &hlaiv1alpha1.DeviceConfig{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "a-device-config",
-		},
-		Spec: hlaiv1alpha1.DeviceConfigSpec{
-			DriverImage:   "",
-			DriverVersion: "",
-		},
-	}
-	return c
-}
+			It("should return an error", func() {
+				Expect(r.DeleteNodeMetricsService(ctx, dc)).To(HaveOccurred())
+			})
+		})
+	})
 
-func makeTestReconciler(t *testing.T, objs ...runtime.Object) *NodeMetricsReconciler {
-	s := scheme.Scheme
-	assert.NoError(t, hlaiv1alpha1.AddToScheme(s))
+	Describe("SetDesiredNodeMetricsDaemonSet", func() {
+		var (
+			ds *appsv1.DaemonSet
+		)
 
-	cl := fake.NewClientBuilder().WithScheme(s).WithRuntimeObjects(objs...).Build()
-	return &NodeMetricsReconciler{
-		client: cl,
-		scheme: s,
-	}
-}
+		Context("with a nil DaemonSet as input", func() {
+			BeforeEach(func() {
+				ds = nil
+			})
+
+			It("should return a DaemonSet cannot be nil error", func() {
+				err := r.SetDesiredNodeMetricsDaemonSet(ds, dc)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("daemonset cannot be nil"))
+			})
+		})
+
+		Context("with a non-nil DaemonSet as input", func() {
+			BeforeEach(func() {
+				dc.Spec.NodeSelector = map[string]string{testLabelKey: testLabelValue}
+
+				ds = &appsv1.DaemonSet{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "a-name",
+						Namespace: "a-namespace",
+					},
+				}
+
+				err := r.SetDesiredNodeMetricsDaemonSet(ds, dc)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			Context("it returns a DaemonSet which", func() {
+				It("should contain the correct node selector", func() {
+					Expect(ds.Spec.Template.Spec.NodeSelector).ToNot(BeNil())
+
+					v, contains := ds.Spec.Template.Spec.NodeSelector[testLabelKey]
+					Expect(contains).To(BeTrue())
+					Expect(v).To(Equal(testLabelValue))
+				})
+
+				It("should have the HostPID enabled", func() {
+					Expect(ds.Spec.Template.Spec.HostPID).To(BeTrue())
+				})
+
+				It("should have the correct ServiceAccountName", func() {
+					Expect(ds.Spec.Template.Spec.ServiceAccountName).To(Equal(nodeMetricsServiceAccount))
+				})
+
+				It("should have one container", func() {
+					Expect(ds.Spec.Template.Spec.Containers).To(HaveLen(1))
+				})
+
+				Context("contains the nodeMetrics container, which", func() {
+					var (
+						nodeMetrics corev1.Container
+					)
+
+					BeforeEach(func() {
+						nodeMetrics = ds.Spec.Template.Spec.Containers[0]
+					})
+
+					It("should have the correct name", func() {
+						Expect(nodeMetrics.Name).To(Equal(nodeMetricsSuffix))
+					})
+
+					It("should have the correct image", func() {
+						Expect(nodeMetrics.Image).To(Equal(s.Settings.NodeMetricsImage))
+					})
+
+					It("should have the image pull policy always", func() {
+						Expect(nodeMetrics.ImagePullPolicy).To(Equal(corev1.PullAlways))
+					})
+
+					It("should have the privileged SecurityContext", func() {
+						Expect(*nodeMetrics.SecurityContext.Privileged).To(BeTrue())
+					})
+
+					It("should have ports", func() {
+						Expect(nodeMetrics.Ports).ToNot(BeNil())
+					})
+
+					It("should have resources", func() {
+						Expect(nodeMetrics.Resources).ToNot(BeNil())
+					})
+
+					It("should have one volume mount ", func() {
+						Expect(nodeMetrics.VolumeMounts).To(HaveLen(1))
+					})
+				})
+
+				It("should have one volume", func() {
+					Expect(ds.Spec.Template.Spec.Volumes).To(HaveLen(1))
+				})
+			})
+		})
+	})
+
+	Describe("SetDesiredNodeMetricsService", func() {
+		var (
+			s *corev1.Service
+		)
+
+		Context("with a nil Service as input", func() {
+			BeforeEach(func() {
+				s = nil
+			})
+
+			It("should return a service cannot be nil error", func() {
+				err := r.SetDesiredNodeMetricsService(s, dc)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("service cannot be nil"))
+			})
+		})
+
+		Context("with a non-nil Service as input", func() {
+			BeforeEach(func() {
+				dc.Spec.NodeSelector = map[string]string{testLabelKey: testLabelValue}
+
+				s = &corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "a-name",
+						Namespace: "a-namespace",
+					},
+				}
+
+				err := r.SetDesiredNodeMetricsService(s, dc)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			Context("it returns a Service which", func() {
+				It("should have ports", func() {
+					Expect(s.Spec.Ports).ToNot(BeNil())
+				})
+
+				It("should have exactly one port", func() {
+					Expect(s.Spec.Ports).To(HaveLen(1))
+				})
+
+				It("should have the correct port", func() {
+					Expect(s.Spec.Ports[0].Port).To(BeEquivalentTo(nodeMetricsPort))
+				})
+
+				It("should have the correct target port", func() {
+					Expect(s.Spec.Ports[0].TargetPort).To(Equal(intstr.FromInt(nodeMetricsPort)))
+				})
+
+				It("should have TCP protocol", func() {
+					Expect(s.Spec.Ports[0].Protocol).To(Equal(corev1.ProtocolTCP))
+				})
+
+				It("should have the prometheus scrape annotation", func() {
+					Expect(s.Annotations).To(HaveKey("prometheus.io/scrape"))
+				})
+			})
+		})
+	})
+})

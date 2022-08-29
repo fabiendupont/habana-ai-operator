@@ -23,7 +23,9 @@ import (
 	"time"
 
 	gomock "github.com/golang/mock/gomock"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	record "k8s.io/client-go/tools/record"
@@ -76,6 +78,46 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				cu = conditions.NewMockUpdater(gCtrl)
 				nsv = NewMockNodeSelectorValidator(gCtrl)
 				c = client.NewMockClient(gCtrl)
+			})
+
+			When("a client not-found error occurs", func() {
+				BeforeEach(func() {
+					s := scheme.Scheme
+
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+					gomock.InOrder(
+						c.EXPECT().
+							Get(ctx, req.NamespacedName, gomock.Any()).
+							Return(apierrors.NewNotFound(schema.GroupResource{Resource: "deviceconfigs"}, testDeviceConfigName)),
+					)
+				})
+
+				It("should not requeue or return an error", func() {
+					res, err := r.Reconcile(ctx, req)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(res.Requeue).To(BeFalse())
+				})
+			})
+
+			When("a client generic error occurs", func() {
+				BeforeEach(func() {
+					s := scheme.Scheme
+
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+					gomock.InOrder(
+						c.EXPECT().
+							Get(ctx, req.NamespacedName, gomock.Any()).
+							Return(apierrors.NewServiceUnavailable("Service unavailable")),
+					)
+				})
+
+				It("should not requeue and return an error", func() {
+					res, err := r.Reconcile(ctx, req)
+					Expect(err).To(HaveOccurred())
+					Expect(res.Requeue).To(BeFalse())
+				})
 			})
 
 			When("no client error occurs", func() {
@@ -139,6 +181,71 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("some-error"))
 					Expect(res.Requeue).To(BeFalse())
+				})
+			})
+
+			When("a reconcile NodeMetrics error occurs", func() {
+				BeforeEach(func() {
+					s := scheme.Scheme
+					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+					gomock.InOrder(
+						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+								d.ObjectMeta = dc.ObjectMeta
+								d.Spec = dc.Spec
+								return nil
+							},
+						),
+						nsv.EXPECT().CheckDeviceConfigForConflictingNodeSelector(ctx, dc).Return(nil),
+						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
+						fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(nil),
+						mr.EXPECT().ReconcileModule(ctx, dc).Return(nil),
+						nmr.EXPECT().ReconcileNodeMetrics(ctx, dc).Return(errors.New("some-error")),
+						cu.EXPECT().SetConditionsErrored(ctx, dc, conditions.ReasonNodeMetricsFailed, gomock.Any()).Return(nil),
+					)
+				})
+
+				It("should return the respective error", func() {
+					res, err := r.Reconcile(ctx, req)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("some-error"))
+					Expect(res.Requeue).To(BeFalse())
+				})
+			})
+
+			Context("that does not contain a finalizer", func() {
+				When("an add finalizer error occurs", func() {
+					BeforeEach(func() {
+						s := scheme.Scheme
+						Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+						Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+
+						gomock.InOrder(
+							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									d.ObjectMeta = dc.ObjectMeta
+									d.Spec = dc.Spec
+									return nil
+								},
+							),
+							nsv.EXPECT().CheckDeviceConfigForConflictingNodeSelector(ctx, dc).Return(nil),
+							fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
+							fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(errors.New("some-error")),
+						)
+					})
+
+					It("should return the respective error", func() {
+						res, err := r.Reconcile(ctx, req)
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("some-error"))
+						Expect(res.Requeue).To(BeFalse())
+					})
 				})
 			})
 		})
@@ -220,32 +327,98 @@ var _ = Describe("DeviceConfigReconciler", func() {
 			})
 
 			Context("which contains a deletion finalizer", func() {
-				It("should delete all resources", func() {
-					s := scheme.Scheme
-					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
-					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+				Context("and a deletion error occurs", func() {
+					It("should return an error", func() {
+						s := scheme.Scheme
+						Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+						Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					gomock.InOrder(
-						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
-								d.ObjectMeta = dc.ObjectMeta
-								d.Spec = dc.Spec
-								return nil
-							},
-						),
-					)
+						gomock.InOrder(
+							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									d.ObjectMeta = dc.ObjectMeta
+									d.Spec = dc.Spec
+									return nil
+								},
+							),
+						)
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
 
-					gomock.InOrder(
-						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
-						mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
-						fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(nil),
-					)
+						gomock.InOrder(
+							fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+							mr.EXPECT().DeleteModule(ctx, dc).Return(errors.New("something went wrong")),
+						)
 
-					res, err := r.Reconcile(ctx, req)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(res.Requeue).To(BeFalse())
+						res, err := r.Reconcile(ctx, req)
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(And(
+							ContainSubstring("failed to delete DeviceConfig resources"),
+							ContainSubstring("something went wrong")))
+						Expect(res.Requeue).To(BeFalse())
+					})
+				})
+
+				Context("and no deletion error occurs", func() {
+					Context("and no remove finalizer error occurs", func() {
+						It("should not requeue or return an error", func() {
+							s := scheme.Scheme
+							Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+							Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+							gomock.InOrder(
+								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+										d.ObjectMeta = dc.ObjectMeta
+										d.Spec = dc.Spec
+										return nil
+									},
+								),
+							)
+
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+
+							gomock.InOrder(
+								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+								mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
+								fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(nil),
+							)
+
+							res, err := r.Reconcile(ctx, req)
+							Expect(err).ToNot(HaveOccurred())
+							Expect(res.Requeue).To(BeFalse())
+						})
+					})
+
+					Context("and a remove finalizer error occurs", func() {
+						It("should not requeue and return an error", func() {
+							s := scheme.Scheme
+							Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
+							Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
+
+							gomock.InOrder(
+								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+										d.ObjectMeta = dc.ObjectMeta
+										d.Spec = dc.Spec
+										return nil
+									},
+								),
+							)
+
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+
+							gomock.InOrder(
+								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
+								mr.EXPECT().DeleteModule(ctx, dc).Return(nil),
+								fu.EXPECT().RemoveDeletionFinalizer(ctx, dc).Return(errors.New("some error")),
+							)
+
+							res, err := r.Reconcile(ctx, req)
+							Expect(err).To(HaveOccurred())
+							Expect(res.Requeue).To(BeFalse())
+						})
+					})
 				})
 			})
 
