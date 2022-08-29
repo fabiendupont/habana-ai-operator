@@ -9,7 +9,7 @@ metadata:
     containerImage: quay.io/fabiendupont/habana-ai-operator
     description: Manages Habana Labs accelerators within a Kubernetes cluster
     olm.skipRange: '>=0.0.0 <99.0.0'
-    operatorframework.io/cluster-monitoring: true
+    operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: habana-ai-operator
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     repository: http://github.com/HabanaAI/habana-ai-operator

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package node
+package metrics
 
 import (
 	"context"
@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -49,7 +50,7 @@ const (
 	nodeMetricsRequestsMemory = "200Mi"
 )
 
-//go:generate mockgen -source=node.go -package=node -destination=mock_node.go
+//go:generate mockgen -source=metrics.go -package=metrics -destination=mock_metrics.go
 
 type Reconciler interface {
 	ReconcileNodeMetrics(ctx context.Context, dc *hlaiv1alpha1.DeviceConfig) error
@@ -269,9 +270,7 @@ func (r *NodeMetricsReconciler) SetDesiredNodeMetricsService(s *corev1.Service, 
 		return errors.New("service cannot be nil")
 	}
 
-	s.ObjectMeta.Labels = map[string]string{
-		"app": "nodeMetrics",
-	}
+	s.ObjectMeta.Labels = labelsForNodeMetricsDaemonSet(cr)
 	s.ObjectMeta.Annotations = map[string]string{
 		"prometheus.io/scrape": "true",
 	}
@@ -280,6 +279,7 @@ func (r *NodeMetricsReconciler) SetDesiredNodeMetricsService(s *corev1.Service, 
 		Selector: labelsForNodeMetricsDaemonSet(cr),
 		Ports: []corev1.ServicePort{
 			{
+				Name:       nodeMetricsSuffix,
 				Port:       nodeMetricsPort,
 				TargetPort: intstr.FromInt(nodeMetricsPort),
 				Protocol:   corev1.ProtocolTCP,
@@ -302,9 +302,9 @@ func (r *NodeMetricsReconciler) makeNodeMetricsContainer(cr *hlaiv1alpha1.Device
 	nodeMetrics.Image = s.Settings.NodeMetricsImage
 	nodeMetrics.ImagePullPolicy = corev1.PullAlways
 
-	privileged := true
 	nodeMetrics.SecurityContext = &corev1.SecurityContext{
-		Privileged: &privileged,
+		Privileged: pointer.Bool(true),
+		RunAsUser:  pointer.Int64(0),
 	}
 
 	nodeMetrics.Ports = []corev1.ContainerPort{

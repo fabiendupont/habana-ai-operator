@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package node
+package metrics
 
 import (
 	"context"
@@ -324,6 +324,10 @@ var _ = Describe("NodeMetricsReconciler", func() {
 
 					It("should have the privileged SecurityContext", func() {
 						Expect(*nodeMetrics.SecurityContext.Privileged).To(BeTrue())
+					})
+
+					It("should run as user root (id: 0)", func() {
+						Expect(*nodeMetrics.SecurityContext.RunAsUser).To(Equal(int64(0)))
 					})
 
 					It("should have ports", func() {

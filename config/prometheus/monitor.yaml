@@ -1,4 +1,25 @@
-# Prometheus Monitor Service (Metrics)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: node-metrics
+  name: node-metrics-monitor
+  namespace: system
+spec:
+  endpoints:
+    - path: /metrics
+      port: node-metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+      interval: 30s
+      scrapeTimeout: 20s
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: habana-ai-operator
+      app.kubernetes.io/component: node-metrics
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

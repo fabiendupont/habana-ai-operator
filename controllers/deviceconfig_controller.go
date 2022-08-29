@@ -34,8 +34,8 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/metrics"
-	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/metrics/node"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
+	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
 

@@ -9,7 +9,7 @@ spec:
       containers:
         - name: manager
           env:
-            - name: "DCGM_EXPORTER_IMAGE"
-              value: 
             - name: "DEVICE_PLUGIN_IMAGE"
-              value: vault.habana.ai/docker-k8s-device-plugin/docker-k8s-device-plugin@sha256:8d26825a2745effc2592b80fa7b7127e9d844ae516379737ef137e0b7b07ad7c
+              value: vault.habana.ai/docker-k8s-device-plugin/docker-k8s-device-plugin@sha256:dd58ff65a6afe6732253f325402abb2cb7065393720c9894581c384f07a42783
+            - name: "NODE_METRICS_IMAGE"
+              value: vault.habana.ai/gaudi-metric-exporter/metric-exporter@sha256:554d946a72161cb097de9134a5bc61a843b2e301c924b8578de06876cb8cbd68
