@@ -176,10 +176,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	return ctrl.NewControllerManagedBy(mgr).
-		Named("device-config").
+		Named("deviceconfig").
 		For(&hlaiv1alpha1.DeviceConfig{}).
 		Owns(&kmmv1beta1.Module{}).
-		Named("deviceconfig").
 		Complete(r)
 }
 
