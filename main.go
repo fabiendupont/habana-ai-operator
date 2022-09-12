@@ -41,6 +41,7 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
 	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
+	nodeLabeler "github.com/HabanaAI/habana-ai-operator/internal/node/labeler"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -118,6 +119,7 @@ func main() {
 
 	mr := module.NewReconciler(c, s)
 	nmr := nodeMetrics.NewReconciler(c, s)
+	nlr := nodeLabeler.NewReconciler(c, s)
 	fu := finalizers.NewUpdater(c)
 	cu := conditions.NewUpdater(c)
 	nsv := controllers.NewNodeSelectorValidator(c)

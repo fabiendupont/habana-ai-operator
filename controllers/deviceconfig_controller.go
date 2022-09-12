@@ -34,8 +34,10 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/metrics"
+	"github.com/HabanaAI/habana-ai-operator/internal/labeler"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
 	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
+	nodeLabeler "github.com/HabanaAI/habana-ai-operator/internal/node/labeler"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
 
@@ -48,6 +50,7 @@ type Reconciler struct {
 
 	mr  module.Reconciler
 	nmr nodeMetrics.Reconciler
+	nlr nodeLabeler.Reconciler
 
 	fu finalizers.Updater
 	cu conditions.Updater
@@ -61,6 +64,7 @@ func NewReconciler(
 	recorder record.EventRecorder,
 	mr module.Reconciler,
 	nmr nodeMetrics.Reconciler,
+	nlr nodeLabeler.Reconciler,
 	fu finalizers.Updater,
 	cu conditions.Updater,
 	nsv NodeSelectorValidator,
@@ -71,6 +75,7 @@ func NewReconciler(
 		Recorder: recorder,
 		mr:       mr,
 		nmr:      nmr,
+		nlr:      nlr,
 		fu:       fu,
 		cu:       cu,
 		nsv:      nsv,
@@ -143,6 +148,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	if err := r.mr.ReconcileModule(ctx, deviceConfig); err != nil {
 		if cerr := r.cu.SetConditionsErrored(ctx, deviceConfig, conditions.ReasonModuleFailed, err.Error()); cerr != nil {
+			err = fmt.Errorf("%s: %w", err.Error(), cerr)
+		}
+		metrics.ReconciliationFailed.WithLabelValues(deviceConfig.Name).Set(1)
+		return ctrl.Result{}, err
+	}
+
+	if err = r.nlr.ReconcileNodeLabels(ctx, deviceConfig); err != nil {
+		if cerr := r.cu.SetConditionsErrored(ctx, deviceConfig, conditions.ReasonNodeLabelerFailed, err.Error()); cerr != nil {
 			err = fmt.Errorf("%s: %w", err.Error(), cerr)
 		}
 		metrics.ReconciliationFailed.WithLabelValues(deviceConfig.Name).Set(1)
