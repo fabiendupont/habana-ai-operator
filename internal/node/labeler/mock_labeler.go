@@ -11,7 +11,6 @@ import (
 	v1alpha1 "github.com/HabanaAI/habana-ai-operator/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/apps/v1"
-	v10 "k8s.io/api/core/v1"
 )
 
 // MockReconciler is a mock of Reconciler interface.

@@ -34,10 +34,9 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/metrics"
-	"github.com/HabanaAI/habana-ai-operator/internal/labeler"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
-	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
 	nodeLabeler "github.com/HabanaAI/habana-ai-operator/internal/node/labeler"
+	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
 	s "github.com/HabanaAI/habana-ai-operator/internal/settings"
 )
 
@@ -154,7 +153,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	if err = r.nlr.ReconcileNodeLabels(ctx, deviceConfig); err != nil {
+	if err = r.nlr.ReconcileNodeLabeler(ctx, deviceConfig); err != nil {
 		if cerr := r.cu.SetConditionsErrored(ctx, deviceConfig, conditions.ReasonNodeLabelerFailed, err.Error()); cerr != nil {
 			err = fmt.Errorf("%s: %w", err.Error(), cerr)
 		}

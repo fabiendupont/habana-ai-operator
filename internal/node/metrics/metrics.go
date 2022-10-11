@@ -348,10 +348,12 @@ func labelsForNodeMetricsDaemonSet(cr *hlaiv1alpha1.DeviceConfig) map[string]str
 }
 
 // TODO: NodeMetricsConditions shoud reflect the conditions of the pods
-//       on the nodes. For that, we should list all the nodes that match the
-//       DaemonSet.Spec.Template.Spec.NodeSelector and verify the conditions
-//       of the pods running on each of these nodes. We can then set the
-//       NodeMetrics* conditions accordingly.
+//
+//	on the nodes. For that, we should list all the nodes that match the
+//	DaemonSet.Spec.Template.Spec.NodeSelector and verify the conditions
+//	of the pods running on each of these nodes. We can then set the
+//	NodeMetrics* conditions accordingly.
+//
 // TODO: Define the NodeMetrics* conditions and what they mean.
 // setNodeMetricsConditions wraps the condition create/update
 func setNodeMetricsConditions(r *NodeMetricsReconciler) (err error) {

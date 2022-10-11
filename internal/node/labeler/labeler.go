@@ -28,7 +28,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -140,7 +139,7 @@ func (r *NodeLabelerReconciler) DeleteNodeLabelerDaemonSet(ctx context.Context, 
 		return fmt.Errorf("failed to delete DaemonSet %s: %w", ds.Name, err)
 	}
 
-	return nil+
+	return nil
 }
 
 func (r *NodeLabelerReconciler) SetDesiredNodeLabelerDaemonSet(ds *appsv1.DaemonSet, cr *hlaiv1alpha1.DeviceConfig) error {
@@ -211,15 +210,6 @@ func (r *NodeLabelerReconciler) makeNodeLabelerContainer(cr *hlaiv1alpha1.Device
 		RunAsUser:  pointer.Int64(0),
 	}
 
-	nodeLabeler.Ports = []corev1.ContainerPort{
-		{
-			ContainerPort: nodeLabelerPort,
-			HostPort:      nodeLabelerPort,
-			Name:          nodeLabelerSuffix,
-			Protocol:      corev1.ProtocolTCP,
-		},
-	}
-
 	nodeLabeler.Resources = corev1.ResourceRequirements{
 		Limits: corev1.ResourceList{
 			"cpu":    resource.MustParse(nodeLabelerLimitsCpu),
@@ -252,10 +242,12 @@ func labelsForNodeLabelerDaemonSet(cr *hlaiv1alpha1.DeviceConfig) map[string]str
 }
 
 // TODO: NodeLabelerConditions shoud reflect the conditions of the pods
-//       on the nodes. For that, we should list all the nodes that match the
-//       DaemonSet.Spec.Template.Spec.NodeSelector and verify the conditions
-//       of the pods running on each of these nodes. We can then set the
-//       NodeLabeler* conditions accordingly.
+//
+//	on the nodes. For that, we should list all the nodes that match the
+//	DaemonSet.Spec.Template.Spec.NodeSelector and verify the conditions
+//	of the pods running on each of these nodes. We can then set the
+//	NodeLabeler* conditions accordingly.
+//
 // TODO: Define the NodeLabeler* conditions and what they mean.
 // setNodeLabelerConditions wraps the condition create/update
 func setNodeLabelerConditions(r *NodeLabelerReconciler) (err error) {
