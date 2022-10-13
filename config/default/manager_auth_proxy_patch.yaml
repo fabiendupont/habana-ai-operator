@@ -28,13 +28,23 @@ spec:
             cpu: 5m
             memory: 64Mi
         livenessProbe:
-          tcpSocket:
-            port: 8443
+          exec:
+            command:
+              - "curl"
+              - "--insecure"
+              - "--head"
+              - "--get"
+              - "https://127.0.0.1:8443/"
           initialDelaySeconds: 15
           periodSeconds: 20
         readinessProbe:
-          tcpSocket:
-            port: 8443
+          exec:
+            command:
+              - "curl"
+              - "--insecure"
+              - "--head"
+              - "--get"
+              - "https://127.0.0.1:8443/"
           initialDelaySeconds: 5
           periodSeconds: 10
         securityContext:
