@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -191,6 +192,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("deviceconfig").
 		For(&hlaiv1alpha1.DeviceConfig{}).
 		Owns(&kmmv1beta1.Module{}).
+		Owns(&appsv1.DaemonSet{}).
 		Complete(r)
 }
 

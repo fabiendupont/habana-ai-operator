@@ -70,7 +70,7 @@ func NewReconciler(c client.Client, s *runtime.Scheme) *NodeLabelerReconciler {
 	}
 }
 
-func GetNodeLabelerName(cr *hlaiv1alpha1.DeviceConfig) string {
+func getNodeLabelerName(cr *hlaiv1alpha1.DeviceConfig) string {
 	return fmt.Sprintf("%s-%s", cr.Name, nodeLabelerSuffix)
 }
 
@@ -87,7 +87,7 @@ func (r *NodeLabelerReconciler) ReconcileNodeLabelerDaemonSet(ctx context.Contex
 	logger := log.FromContext(ctx)
 
 	existingDS := &appsv1.DaemonSet{}
-	err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: GetNodeLabelerName(cr)}, existingDS)
+	err := r.client.Get(ctx, types.NamespacedName{Namespace: cr.Namespace, Name: getNodeLabelerName(cr)}, existingDS)
 	exists := !apierrors.IsNotFound(err)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
@@ -95,7 +95,7 @@ func (r *NodeLabelerReconciler) ReconcileNodeLabelerDaemonSet(ctx context.Contex
 
 	ds := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetNodeLabelerName(cr),
+			Name:      getNodeLabelerName(cr),
 			Namespace: cr.Namespace,
 		},
 	}
@@ -118,18 +118,13 @@ func (r *NodeLabelerReconciler) ReconcileNodeLabelerDaemonSet(ctx context.Contex
 }
 
 func (r *NodeLabelerReconciler) DeleteNodeLabeler(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
-	err := r.DeleteNodeLabelerDaemonSet(ctx, cr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.DeleteNodeLabelerDaemonSet(ctx, cr)
 }
 
 func (r *NodeLabelerReconciler) DeleteNodeLabelerDaemonSet(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
 	ds := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetNodeLabelerName(cr),
+			Name:      getNodeLabelerName(cr),
 			Namespace: cr.Namespace,
 		},
 	}
@@ -190,11 +185,7 @@ func (r *NodeLabelerReconciler) SetDesiredNodeLabelerDaemonSet(ds *appsv1.Daemon
 		Volumes:            volumes,
 	}
 
-	if err := ctrl.SetControllerReference(cr, ds, r.scheme); err != nil {
-		return err
-	}
-
-	return nil
+	return ctrl.SetControllerReference(cr, ds, r.scheme)
 }
 
 func (r *NodeLabelerReconciler) makeNodeLabelerContainer(cr *hlaiv1alpha1.DeviceConfig) corev1.Container {

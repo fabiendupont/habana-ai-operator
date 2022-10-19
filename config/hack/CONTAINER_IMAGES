@@ -18,6 +18,6 @@
     "registry": "ghcr.io",
     "namespace": "mwalter-habana",
     "name": "habana-node-labeler",
-    "tag": "0.0.1"
+    "tag": "0.0.2"
   }
 ]

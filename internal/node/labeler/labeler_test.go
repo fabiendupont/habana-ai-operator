@@ -75,7 +75,7 @@ var _ = Describe("NodeLabelerReconciler", func() {
 				gomock.InOrder(
 					c.EXPECT().
 						Get(ctx, gomock.Any(), gomock.Any()).
-						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, GetNodeLabelerName(dc))).
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, getNodeLabelerName(dc))).
 						AnyTimes(),
 				)
 			})
@@ -136,7 +136,7 @@ var _ = Describe("NodeLabelerReconciler", func() {
 				gomock.InOrder(
 					c.EXPECT().
 						Delete(ctx, gomock.Any()).
-						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, GetNodeLabelerName(dc))),
+						Return(apierrors.NewNotFound(schema.GroupResource{Resource: "daemonsets"}, getNodeLabelerName(dc))),
 				)
 			})
 
