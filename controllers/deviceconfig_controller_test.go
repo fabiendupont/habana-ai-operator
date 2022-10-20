@@ -39,6 +39,7 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
+	nodeLabeler "github.com/HabanaAI/habana-ai-operator/internal/node/labeler"
 	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
 	kmmv1beta1 "github.com/kubernetes-sigs/kernel-module-management/api/v1beta1"
 )
@@ -63,6 +64,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				gCtrl *gomock.Controller
 				mr    *module.MockReconciler
 				nmr   *nodeMetrics.MockReconciler
+				nlr   *nodeLabeler.MockReconciler
 				fu    *finalizers.MockUpdater
 				cu    *conditions.MockUpdater
 				nsv   *MockNodeSelectorValidator
@@ -74,6 +76,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				gCtrl = gomock.NewController(GinkgoT())
 				mr = module.NewMockReconciler(gCtrl)
 				nmr = nodeMetrics.NewMockReconciler(gCtrl)
+				nlr = nodeLabeler.NewMockReconciler(gCtrl)
 				fu = finalizers.NewMockUpdater(gCtrl)
 				cu = conditions.NewMockUpdater(gCtrl)
 				nsv = NewMockNodeSelectorValidator(gCtrl)
@@ -84,7 +87,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				BeforeEach(func() {
 					s := scheme.Scheme
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 					gomock.InOrder(
 						c.EXPECT().
@@ -104,7 +107,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				BeforeEach(func() {
 					s := scheme.Scheme
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 					gomock.InOrder(
 						c.EXPECT().
@@ -126,7 +129,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
@@ -140,6 +143,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
 						fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(nil),
 						mr.EXPECT().ReconcileModule(ctx, dc).Return(nil),
+						nlr.EXPECT().ReconcileNodeLabeler(ctx, dc).Return(nil),
 						nmr.EXPECT().ReconcileNodeMetrics(ctx, dc).Return(nil),
 						cu.EXPECT().SetConditionsReady(ctx, dc, "Reconciled", gomock.Any()).Return(nil),
 					)
@@ -158,7 +162,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
@@ -190,7 +194,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
@@ -204,6 +208,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 						fu.EXPECT().ContainsDeletionFinalizer(dc).Return(false),
 						fu.EXPECT().AddDeletionFinalizer(ctx, dc).Return(nil),
 						mr.EXPECT().ReconcileModule(ctx, dc).Return(nil),
+						nlr.EXPECT().ReconcileNodeLabeler(ctx, dc).Return(nil),
 						nmr.EXPECT().ReconcileNodeMetrics(ctx, dc).Return(errors.New("some-error")),
 						cu.EXPECT().SetConditionsErrored(ctx, dc, conditions.ReasonNodeMetricsFailed, gomock.Any()).Return(nil),
 					)
@@ -224,7 +229,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 						Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 						Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, cu, nsv)
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, cu, nsv)
 
 						gomock.InOrder(
 							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
@@ -292,6 +297,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				r = NewReconciler(c, s, fakeRecorder,
 					module.NewReconciler(c, s),
 					nodeMetrics.NewReconciler(c, s),
+					nodeLabeler.NewReconciler(c, s),
 					finalizers.NewUpdater(c),
 					conditions.NewUpdater(c),
 					nsv,
@@ -313,6 +319,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				gCtrl *gomock.Controller
 				mr    *module.MockReconciler
 				nmr   *nodeMetrics.MockReconciler
+				nlr   *nodeLabeler.MockReconciler
 				fu    *finalizers.MockUpdater
 				r     *Reconciler
 				c     *client.MockClient
@@ -322,6 +329,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				gCtrl = gomock.NewController(GinkgoT())
 				mr = module.NewMockReconciler(gCtrl)
 				nmr = nodeMetrics.NewMockReconciler(gCtrl)
+				nlr = nodeLabeler.NewMockReconciler(gCtrl)
 				fu = finalizers.NewMockUpdater(gCtrl)
 				c = client.NewMockClient(gCtrl)
 			})
@@ -343,7 +351,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 							),
 						)
 
-						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+						r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, nil, nil)
 
 						gomock.InOrder(
 							fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
@@ -376,7 +384,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 								),
 							)
 
-							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, nil, nil)
 
 							gomock.InOrder(
 								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
@@ -406,7 +414,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 								),
 							)
 
-							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, fu, nil, nil)
+							r = NewReconciler(c, s, record.NewFakeRecorder(1), mr, nmr, nlr, fu, nil, nil)
 
 							gomock.InOrder(
 								fu.EXPECT().ContainsDeletionFinalizer(dc).Return(true),
@@ -439,7 +447,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 					Expect(hlaiv1alpha1.AddToScheme(s)).ToNot(HaveOccurred())
 					Expect(kmmv1beta1.AddToScheme(s)).ToNot(HaveOccurred())
 
-					r = NewReconciler(c, s, record.NewFakeRecorder(1), nil, nil, fu, nil, nil)
+					r = NewReconciler(c, s, record.NewFakeRecorder(1), nil, nil, nil, fu, nil, nil)
 
 					res, err := r.Reconcile(ctx, req)
 					Expect(err).ToNot(HaveOccurred())

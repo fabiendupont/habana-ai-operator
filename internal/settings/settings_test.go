@@ -30,6 +30,7 @@ func TestControllerSettings_Load(t *testing.T) {
 		DevicePluginImage:         env["DEVICE_PLUGIN_IMAGE"],
 		DriverHabanaImageBasename: env["DRIVER_HABANA_IMAGE_BASENAME"],
 		NodeMetricsImage:          env["NODE_METRICS_IMAGE"],
+		NodeLabelerImage:          env["NODE_LABELER_IMAGE"],
 	}
 
 	cs := &ControllerSettings{}
@@ -71,11 +72,13 @@ func TestControllerSettings_Load_withMultipleEnvVarsMissing(t *testing.T) {
 		{missingEnvVars: []string{"DEVICE_PLUGIN_IMAGE"}},
 		{missingEnvVars: []string{"DRIVER_HABANA_IMAGE_BASENAME"}},
 		{missingEnvVars: []string{"NODE_METRICS_IMAGE"}},
+		{missingEnvVars: []string{"NODE_LABELER_IMAGE"}},
 		{
 			missingEnvVars: []string{
 				"DEVICE_PLUGIN_IMAGE",
 				"DRIVER_HABANA_IMAGE_BASENAME",
 				"NODE_METRICS_IMAGE",
+				"NODE_LABELER_IMAGE",
 			},
 		},
 	}
@@ -108,6 +111,7 @@ func getCompleteEnv() map[string]string {
 		"DEVICE_PLUGIN_IMAGE":          "device plugin image",
 		"DRIVER_HABANA_IMAGE_BASENAME": "driver habana image basename",
 		"NODE_METRICS_IMAGE":           "node metrics image",
+		"NODE_LABELER_IMAGE":           "node labeler image",
 	}
 }
 

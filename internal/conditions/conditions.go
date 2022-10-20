@@ -29,6 +29,7 @@ const (
 	Errored = "Errored"
 
 	ReasonModuleFailed      = "ModuleFailed"
+	ReasonNodeLabelerFailed = "NodeLabelerFailed"
 	ReasonNodeMetricsFailed = "NodeMetricsFailed"
 
 	ReasonConflictingNodeSelector = "ConflictingNodeSelector"

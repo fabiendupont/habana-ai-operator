@@ -23,6 +23,7 @@ const (
 	DevicePluginImageEnvVar         = "DEVICE_PLUGIN_IMAGE"
 	DriverHabanaImageBasenameEnvVar = "DRIVER_HABANA_IMAGE_BASENAME"
 	NodeMetricsImageEnvVar          = "NODE_METRICS_IMAGE"
+	NodeLabelerImageEnvVar          = "NODE_LABELER_IMAGE"
 )
 
 var (
@@ -35,6 +36,7 @@ type ControllerSettings struct {
 	DevicePluginImage         string
 	DriverHabanaImageBasename string
 	NodeMetricsImage          string
+	NodeLabelerImage          string
 }
 
 func (r *ControllerSettings) Load() error {
@@ -54,6 +56,11 @@ func (r *ControllerSettings) Load() error {
 	r.NodeMetricsImage, found = os.LookupEnv(NodeMetricsImageEnvVar)
 	if !found {
 		errs = append(errs, fmt.Errorf("%v: %w", NodeMetricsImageEnvVar, errEnvVarNotSet))
+	}
+
+	r.NodeLabelerImage, found = os.LookupEnv(NodeLabelerImageEnvVar)
+	if !found {
+		errs = append(errs, fmt.Errorf("%v: %w", NodeLabelerImageEnvVar, errEnvVarNotSet))
 	}
 
 	if len(errs) > 0 {

@@ -128,9 +128,11 @@ func (r *moduleReconciler) SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alph
 		return errors.New("module cannot be nil")
 	}
 
-	devicePlugin := r.makeDevicePlugin(cr)
+	deviceType := "gaudi"
+	devicePlugin := r.makeDevicePlugin(cr, deviceType)
 	ModuleLoader := r.makeModuleLoader(cr)
 	selector := cr.GetNodeSelector()
+	selector[fmt.Sprintf("habana.ai/hpu.%s.present", deviceType)] = "true"
 
 	m.Spec = kmmv1beta1.ModuleSpec{
 		DevicePlugin: &devicePlugin,
@@ -161,12 +163,12 @@ func (r *moduleReconciler) makeModuleLoader(cr *hlaiv1alpha1.DeviceConfig) kmmv1
 	return moduleLoader
 }
 
-func (r *moduleReconciler) makeDevicePlugin(cr *hlaiv1alpha1.DeviceConfig) kmmv1beta1.DevicePluginSpec {
+func (r *moduleReconciler) makeDevicePlugin(cr *hlaiv1alpha1.DeviceConfig, deviceType string) kmmv1beta1.DevicePluginSpec {
 	devicePlugin := kmmv1beta1.DevicePluginSpec{
 		Container: kmmv1beta1.DevicePluginContainerSpec{
 			Args: []string{
 				"--dev_type",
-				"gaudi",
+				deviceType,
 			},
 			Command: []string{
 				"habanalabs-device-plugin",

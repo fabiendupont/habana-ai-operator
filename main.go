@@ -40,6 +40,7 @@ import (
 	"github.com/HabanaAI/habana-ai-operator/internal/conditions"
 	"github.com/HabanaAI/habana-ai-operator/internal/finalizers"
 	"github.com/HabanaAI/habana-ai-operator/internal/module"
+	nodeLabeler "github.com/HabanaAI/habana-ai-operator/internal/node/labeler"
 	nodeMetrics "github.com/HabanaAI/habana-ai-operator/internal/node/metrics"
 	//+kubebuilder:scaffold:imports
 )
@@ -118,10 +119,11 @@ func main() {
 
 	mr := module.NewReconciler(c, s)
 	nmr := nodeMetrics.NewReconciler(c, s)
+	nlr := nodeLabeler.NewReconciler(c, s)
 	fu := finalizers.NewUpdater(c)
 	cu := conditions.NewUpdater(c)
 	nsv := controllers.NewNodeSelectorValidator(c)
-	dcc := controllers.NewReconciler(c, s, mgr.GetEventRecorderFor("deviceconfig-controller"), mr, nmr, fu, cu, nsv)
+	dcc := controllers.NewReconciler(c, s, mgr.GetEventRecorderFor("deviceconfig-controller"), mr, nmr, nlr, fu, cu, nsv)
 
 	if err := dcc.SetupWithManager(mgr); err != nil {
 		setupLogger.Error(err, "unable to create controller", "controller", "DeviceConfig")
