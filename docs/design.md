@@ -7,7 +7,7 @@
 
 ## Summary
 
-The Habana AI Operator fullfills the goal to seamlessly enable Habana AI accelerators on Kubernetes and OpenShift.
+The Habana AI Operator fullfils the goal to seamlessly enable Habana AI accelerators on Kubernetes and OpenShift.
 It provides an opinionated and extendable API. It offloads the driver container and the device plugin to
 [KMMO](https://github.com/kubernetes-sigs/kernel-module-management/blob/design/docs/design/fundamentals.md).
 It follows the software engineering practices, leading to great maintainability, reliability and development velocity.
@@ -54,7 +54,6 @@ The `DeviceConfig` specification has the following goals:
   [NodeSelector](https://pkg.go.dev/k8s.io/api/core/v1#PodSpec)
 - each `DeviceConfig` can have a different driver configuration
 - the `DeviceConfig` should accept minimum user input
-
 
 ![DeviceConfig Example](./assets/deviceconfig-example.png)
 

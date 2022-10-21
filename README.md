@@ -13,11 +13,17 @@
 $ kubectl apply -k https://github.com/kubernetes-sigs/kernel-module-management/config/default
 
 # Deploy the Habana AI Operator
-$ git clone git@github.com:fabiendupont/habana-ai-operator.git && cd habana-ai-operator
+$ git clone https://github.com/fabiendupont/habana-ai-operator.git && cd habana-ai-operator
 $ make deploy
 
+# Deploy the NodeFeatureDiscovery Operator
+$ kubectl apply -k https://github.com/kubernetes-sigs/node-feature-discovery-operator/config/default
+
+# Deploy a NodeFeatureDiscovery instance with the extra namespace `habana.ai`
+$ kubectl apply -f hack/openshift/nfd-instance.yaml
+
 # Create a sample DeviceConfig that targets all DL1 nodes.
-$ kubectl apply -f config/samples/habana.ai_v1alpha1_deviceconfig.yaml
+$ kubectl apply -k config/samples/habana.ai_v1alpha1_deviceconfig.yaml
 
 # Wait until all Habana AI components are healthy
 $ kubectl get -n habana-ai-operator get all
@@ -27,14 +33,18 @@ $ cat <<EOF kubectl -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: hl-smi
+  name: habana-ai-demo
   namespace: habana-ai-operator
 spec:
   restartPolicy: OnFailure
   containers:
-  - image: ghcr.io/fabiendupont/habana-ai-hl-smi:latest
+  - image: vault.habana.ai/gaudi-docker/1.6.1/ubuntu20.04/habanalabs/tensorflow-installer-tf-cpu-2.9.1:latest
     imagePullPolicy: IfNotPresent
-    name: hl-smi
+    name: habana-ai-base-container
+    command:
+      - "hl-smi"
+    args:
+      - "-L"
     resources:
       limits:
         habana.ai/gaudi: "1"
@@ -97,23 +107,32 @@ $ oc get clusterversions.config.openshift.io
 NAME      VERSION   AVAILABLE   PROGRESSING   SINCE   STATUS
 version   4.11.0    True        False         30h     Cluster version is 4.11.0
 
-# Enable alternative firmware path on worker nodes
-$ oc apply -f https://github.com/fabiendupont/habana-ai-operator/hack/openshift/machineconfig-firmware-path.yaml
-
 # Deploy the Kernel Module Management Operator
 $ oc apply -k https://github.com/kubernetes-sigs/kernel-module-management/config/default
 
-# Deploy the Habana AI Operator via OLM
-$ oc apply -f https://github.com/fabiendupont/habana-ai-operator/hack/openshift/deploy.yaml
+# Clone this repository
+$ git clone https://github.com/fabiendupont/habana-ai-operator.git && cd habana-ai-operator
+
+# Enable alternative firmware path on worker nodes
+$ oc apply -f hack/openshift/machineconfig-firmware-path.yaml
+
+# Deploy the NodeFeatureDiscovery operator
+$ oc apply -f hack/openshift/nfd-install.yaml
+
+# Deploy an NodeFeatureDiscovery instance with the extra namespace: `habana.ai`
+$ oc apply -f hack/openshift/nfd-instance.yaml
+
+# Deploy the Habana AI operator
+$ make deploy
 
 # Create a sample DeviceConfig targeting Habana AI nodes.
-$ oc apply -f https://github.com/fabiendupont/habana-ai-operator/hack/openshift/deviceconfig.yaml
+$ oc apply -f hack/openshift/deviceconfig.yaml
 
 # Wait for all Habana AI components to be healthy
 $ oc get -n habana-ai-operator all
 
 # Verify the setup by running a sample workload pod
-$ oc apply -f https://github.com/fabiendupont/habana-ai-operator/hack/openshift/sample-workload.yaml
+$ oc apply -f hack/openshift/sample-workload.yaml
 
 # Check the workload logs
 $ oc logs -n default pod/hl-smi
