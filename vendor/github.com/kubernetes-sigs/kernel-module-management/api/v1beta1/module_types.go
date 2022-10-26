@@ -49,6 +49,12 @@ type PushOptions struct {
 	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
 }
 
+type KanikoParams struct {
+	// +optional
+	// Kaniko image tag to use when creating the build Job
+	Tag string `json:"tag,omitempty"`
+}
+
 type Build struct {
 	// +optional
 	// BuildArgs is an array of build variables that are provided to the image building backend.
@@ -57,7 +63,7 @@ type Build struct {
 	Dockerfile string `json:"dockerfile"`
 
 	// +optional
-	// Pull contains settings determining how to check if the DriverContainer image already exists.
+	// Pull contains settings determining how to pull the base images of the build process.
 	Pull PullOptions `json:"pull"`
 
 	// +optional
@@ -69,6 +75,26 @@ type Build struct {
 	// Those secrets should be used for private resources such as a private Github repo.
 	// For container registries auth use module.spec.imagePullSecret instead.
 	Secrets []v1.LocalObjectReference `json:"secrets"`
+
+	// +optional
+	// KanikoParams is used to customize the building process of the image.
+	KanikoParams *KanikoParams `json:"kanikoParams,omitempty"`
+}
+
+type Sign struct {
+	// +optional
+	// Image to sign, ignored if a Build is present, required otherwise
+	UnsignedImage string `json:"unsignedImage,omitempty"`
+
+	// a secret containing the private key used to sign kernel modules for secureboot
+	KeySecret *v1.LocalObjectReference `json:"keySecret"`
+
+	// a secret containing the public key used to sign kernel modules for secureboot
+	CertSecret *v1.LocalObjectReference `json:"certSecret"`
+
+	// +optional
+	// paths inside the image for the kernel modules to sign (if ommited all kmods are signed)
+	FilesToSign []string `json:"filesToSign,omitempty"`
 }
 
 // KernelMapping pairs kernel versions with a DriverContainer image.
@@ -79,12 +105,21 @@ type KernelMapping struct {
 	// Build enables in-cluster builds for this mapping and allows overriding the Module's build settings.
 	Build *Build `json:"build"`
 
+	// +optional
+	// Sign enables in-cluster signing for this mapping
+	Sign *Sign `json:"sign,omitempty"`
+
 	// ContainerImage is the name of the DriverContainer image that should be used to deploy the module.
 	ContainerImage string `json:"containerImage"`
 
 	// +optional
 	// Literal defines a literal target kernel version to be matched exactly against node kernels.
 	Literal string `json:"literal"`
+
+	// +optional
+	// Pull contains settings determining how to check if the ModuleLoader image already exists
+	// and allows overriding of the ModuleLoader's pull options
+	Pull *PullOptions `json:"pull"`
 
 	// +optional
 	// Regexp is a regular expression to be match against node kernels.
@@ -137,6 +172,10 @@ type ModuleLoaderContainerSpec struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
+	// +optional
+	// Sign provides default kmod signing settings
+	Sign *Sign `json:"sign,omitempty"`
+
 	// ContainerImage is a top-level field
 	// +optional
 	ContainerImage string `json:"containerImage,omitempty"`
@@ -157,6 +196,10 @@ type ModuleLoaderContainerSpec struct {
 
 	// Modprobe is a set of properties to customize which module modprobe loads and with which properties.
 	Modprobe ModprobeSpec `json:"modprobe"`
+
+	// +optional
+	// Pull contains settings determining how to check if the ModuleLoader image already exists.
+	Pull *PullOptions `json:"pull"`
 }
 
 type ModuleLoaderSpec struct {

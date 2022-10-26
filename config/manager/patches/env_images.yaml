@@ -14,4 +14,4 @@ spec:
             - name: "NODE_METRICS_IMAGE"
               value: vault.habana.ai/gaudi-metric-exporter/metric-exporter@sha256:554d946a72161cb097de9134a5bc61a843b2e301c924b8578de06876cb8cbd68
             - name: "NODE_LABELER_IMAGE"
-              value: ghcr.io/mwalter-habana/habana-node-labeler@sha256:a82893117473a6c38aa144e0194763a8120a2d01254e8cb84f683146364c0098
+              value: ghcr.io/mwalter-habana/habana-node-labeler@sha256:aded2a3e96799653c73014e0cc6f9badc1a1aea3a5e4ababc34632b4ea52c5e8

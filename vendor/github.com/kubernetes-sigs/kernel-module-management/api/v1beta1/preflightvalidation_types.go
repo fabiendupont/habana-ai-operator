@@ -21,10 +21,12 @@ import (
 )
 
 const (
-	VerificationTrue       string = "True"
-	VerificationFalse      string = "False"
-	VerificationStageImage string = "Image"
-	VerificationStageBuild string = "Build"
+	VerificationTrue          string = "True"
+	VerificationFalse         string = "False"
+	VerificationStageImage    string = "Image"
+	VerificationStageBuild    string = "Build"
+	VerificationStageRequeued string = "Requeued"
+	VerificationStageDone     string = "Done"
 )
 
 // PreflightValidationSpec describes the desired state of the resource, such as the kernel version
@@ -35,6 +37,11 @@ type PreflightValidationSpec struct {
 	// KernelImage describes the kernel image that all Modules need to be checked against.
 	// +kubebuilder:validation:Required
 	KernelVersion string `json:"kernelVersion"`
+
+	// Boolean flag that determines whether images build during preflight must also
+	// be pushed to a defined repository
+	// +optional
+	PushBuiltImage bool `json:"pushBuiltImage"`
 }
 
 type CRStatus struct {
@@ -53,7 +60,7 @@ type CRStatus struct {
 	// image (image existence verification), build(build process verification)
 	// +required
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=Image;Build
+	// +kubebuilder:validation:Enum=Image;Build;Requeued;Done
 	VerificationStage string `json:"verificationStage"`
 
 	// LastTransitionTime is the last time the CR status transitioned from one status to another.
@@ -69,7 +76,7 @@ type CRStatus struct {
 // It is populated by the system and is read-only.
 // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 type PreflightValidationStatus struct {
-	// CRStatuses contain observations about each SpecialResource's preflight upgradability validation
+	// CRStatuses contain observations about each Module's preflight upgradability validation
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +optional
@@ -79,7 +86,7 @@ type PreflightValidationStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// PreflightValidation initiates a preflight validations for all SpecialResources on the current Kuberentes cluster.
+// PreflightValidation initiates a preflight validations for all Modules on the current Kubernetes cluster.
 // +kubebuilder:resource:path=preflightvalidations,scope=Cluster
 // +kubebuilder:resource:path=preflightvalidations,scope=Cluster,shortName=pv
 type PreflightValidation struct {
