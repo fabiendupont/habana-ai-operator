@@ -147,7 +147,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 templates: pipenv
-	PIPENV_PIPFILE=config/hack/Pipfile pipenv sync
+	PIPENV_PIPFILE=$(shell pwd)/config/hack/Pipfile pipenv sync
 	CONFIG_CONTAINER_IMAGES=./config/hack/CONTAINER_IMAGES \
 	VAULT_HABANA_AI_USERNAME="" \
 	VAULT_HABANA_AI_PASSWORD="" \
