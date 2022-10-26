@@ -12,7 +12,7 @@ on:
       - '*'
 
 env:
-  GOLANG_VERSION: '1.17'
+  GOLANG_VERSION: '1.18'
   PYTHON_VERSION: '3.10'
   IMAGE_NAME: ${{ github.repository }}
   REGISTRY: ghcr.io
