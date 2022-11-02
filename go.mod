@@ -7,7 +7,7 @@ require (
 	github.com/kubernetes-sigs/kernel-module-management v0.0.0-20221026120036-9189e4cc112e
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/onsi/gomega v1.23.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/stretchr/testify v1.8.1
 	k8s.io/api v0.25.3
 	k8s.io/apimachinery v0.25.3
