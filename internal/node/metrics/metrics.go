@@ -245,7 +245,7 @@ func (r *NodeMetricsReconciler) SetDesiredNodeMetricsDaemonSet(ds *appsv1.Daemon
 	}
 
 	nodeSelector := make(map[string]string)
-	for k, v := range cr.GetNodeSelector() {
+	for k, v := range cr.GetGaudiNodeSelector() {
 		nodeSelector[k] = v
 	}
 

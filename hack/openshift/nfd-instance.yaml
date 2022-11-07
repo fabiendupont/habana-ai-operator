@@ -18,7 +18,7 @@ spec:
   instance: ''
   operand:
     image: >-
-      registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:2c225aa176850b186b4c029ed4c5c55bad37e01eff2d2110b3a007c09f435c0f
+      registry.redhat.io/openshift4/ose-node-feature-discovery@sha256:edd2adfdf423d6a1eb7e8c1e388d9cf5fbc829e7e66c7bc955e9b2a6f50d1a47
     servicePort: 12000
   topologyupdater: false
   workerConfig:

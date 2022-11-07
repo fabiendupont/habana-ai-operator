@@ -114,7 +114,12 @@ $ oc apply -k https://github.com/kubernetes-sigs/kernel-module-management/config
 $ git clone https://github.com/fabiendupont/habana-ai-operator.git && cd habana-ai-operator
 
 # Enable alternative firmware path on worker nodes
-$ oc apply -f hack/openshift/machineconfig-firmware-path.yaml
+$ oc apply -f hack/openshift/machineconfig-firmware-path-worker.yaml
+
+# When using Single Node Openshift (SNO) the node is under both master and worker Roles, but when loking over the Machine Config Pools, the node belongs only to master
+# Run the following command is required only when Habana Labs cards are available on master Machine Config Pool nodes:
+# Enable alternative firmware path on master nodes
+$ oc apply -f hack/openshift/machineconfig-firmware-path-master.yaml
 
 # Deploy the NodeFeatureDiscovery operator
 $ oc apply -f hack/openshift/nfd-install.yaml
@@ -135,5 +140,5 @@ $ oc get -n habana-ai-operator all
 $ oc apply -f hack/openshift/sample-workload.yaml
 
 # Check the workload logs
-$ oc logs -n default pod/hl-smi
+$ oc logs -n habana-ai-operator habana-ai-demo
 ```

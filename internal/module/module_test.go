@@ -37,8 +37,8 @@ const (
 	testDriverImage   = "driver"
 	testDriverVersion = "test"
 
-	testLabelKey   = "label"
-	testLabelValue = "test"
+	testLabelKey   = "habana.ai/hpu.gaudi.present"
+	testLabelValue = "true"
 )
 
 var _ = Describe("ModuleReconciler", func() {

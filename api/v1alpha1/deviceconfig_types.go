@@ -38,6 +38,9 @@ type DeviceConfigSpec struct {
 	//+kubebuilder:validation:Optional
 	// NodeSelector specifies a selector for the DeviceConfig
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	//+kubebuilder:validation:Optional
+	// GaudiNodeSelector specifies a selector for Gaudi nodes
+	GaudiNodeSelector map[string]string `json:"gaudiNodeSelector,omitempty"`
 }
 
 // DeviceConfigStatus defines the observed state of DeviceConfig
@@ -78,6 +81,18 @@ func (dc *DeviceConfig) GetNodeSelector() map[string]string {
 		// If no DeviceConfig.NodeSelector is specified, let's try adding NFD labels, otherwise
 		// the daemonset would be deployed on every schedulable node.
 		ns[fmt.Sprintf("feature.node.kubernetes.io/pci-%s.present", HabanaPCIVendorID)] = "true"
+	}
+	return ns
+}
+
+func (dc *DeviceConfig) GetGaudiNodeSelector() map[string]string {
+	ns := dc.Spec.GaudiNodeSelector
+	if ns == nil {
+		ns = make(map[string]string, 0)
+		// If no DeviceConfig.NodeSelector is specified, let's try adding NFD labels, otherwise
+		// the daemonset would be deployed on every schedulable node.
+		deviceType := "gaudi"
+		ns[fmt.Sprintf("habana.ai/hpu.%s.present", deviceType)] = "true"
 	}
 	return ns
 }

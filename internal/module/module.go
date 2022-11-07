@@ -131,8 +131,7 @@ func (r *moduleReconciler) SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alph
 	deviceType := "gaudi"
 	devicePlugin := r.makeDevicePlugin(cr, deviceType)
 	ModuleLoader := r.makeModuleLoader(cr)
-	selector := cr.GetNodeSelector()
-	selector[fmt.Sprintf("habana.ai/hpu.%s.present", deviceType)] = "true"
+	selector := cr.GetGaudiNodeSelector()
 
 	m.Spec = kmmv1beta1.ModuleSpec{
 		DevicePlugin: &devicePlugin,

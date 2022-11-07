@@ -38,9 +38,8 @@ import (
 )
 
 const (
-	testLabelKey = "label"
-
-	testLabelValue = "test"
+	testLabelKey   = "habana.ai/hpu.gaudi.present"
+	testLabelValue = "true"
 )
 
 var _ = Describe("NodeMetricsReconciler", func() {

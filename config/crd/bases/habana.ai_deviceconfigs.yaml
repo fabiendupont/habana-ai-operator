@@ -41,6 +41,11 @@ spec:
               driverVersion:
                 description: DriverVersion is the Habana driver version deployed
                 type: string
+              gaudiNodeSelector:
+                additionalProperties:
+                  type: string
+                description: GaudiNodeSelector specifies a selector for Gaudi nodes
+                type: object
               nodeSelector:
                 additionalProperties:
                   type: string
