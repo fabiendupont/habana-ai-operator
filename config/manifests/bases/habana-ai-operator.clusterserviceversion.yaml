@@ -13,7 +13,7 @@ metadata:
     operatorframework.io/suggested-namespace: habana-ai-operator
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     repository: http://github.com/HabanaAI/habana-ai-operator
-    support: Habana Labs
+    support: Habana Labs Ltd.
   name: habana-ai-operator.v99.0.0
   namespace: placeholder
 spec:
@@ -62,6 +62,6 @@ spec:
     name: John Doe
   maturity: alpha
   provider:
-    name: Habana Labs
+    name: Habana Labs Ltd.
     url: https://habana.ai
   version: 0.0.0

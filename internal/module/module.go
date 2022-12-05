@@ -131,7 +131,7 @@ func (r *moduleReconciler) SetDesiredModule(m *kmmv1beta1.Module, cr *hlaiv1alph
 	deviceType := "gaudi"
 	devicePlugin := r.makeDevicePlugin(cr, deviceType)
 	ModuleLoader := r.makeModuleLoader(cr)
-	selector := cr.GetGaudiNodeSelector()
+	selector := cr.GetNodeSelector(deviceType)
 
 	m.Spec = kmmv1beta1.ModuleSpec{
 		DevicePlugin: &devicePlugin,
