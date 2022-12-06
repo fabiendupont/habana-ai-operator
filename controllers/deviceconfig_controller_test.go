@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	record "k8s.io/client-go/tools/record"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -133,7 +134,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 								d.ObjectMeta = dc.ObjectMeta
 								d.Spec = dc.Spec
 								return nil
@@ -166,7 +167,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 								d.ObjectMeta = dc.ObjectMeta
 								d.Spec = dc.Spec
 								return nil
@@ -198,7 +199,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 								d.ObjectMeta = dc.ObjectMeta
 								d.Spec = dc.Spec
 								return nil
@@ -233,7 +234,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 						gomock.InOrder(
 							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 									d.ObjectMeta = dc.ObjectMeta
 									d.Spec = dc.Spec
 									return nil
@@ -285,7 +286,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 				gomock.InOrder(
 					c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-						func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+						func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 							d.ObjectMeta = dc.ObjectMeta
 							d.Spec = dc.Spec
 							return nil
@@ -343,7 +344,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 						gomock.InOrder(
 							c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+								func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 									d.ObjectMeta = dc.ObjectMeta
 									d.Spec = dc.Spec
 									return nil
@@ -376,7 +377,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 							gomock.InOrder(
 								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 										d.ObjectMeta = dc.ObjectMeta
 										d.Spec = dc.Spec
 										return nil
@@ -406,7 +407,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 
 							gomock.InOrder(
 								c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+									func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 										d.ObjectMeta = dc.ObjectMeta
 										d.Spec = dc.Spec
 										return nil
@@ -434,7 +435,7 @@ var _ = Describe("DeviceConfigReconciler", func() {
 				It("should do nothing", func() {
 					gomock.InOrder(
 						c.EXPECT().Get(ctx, req.NamespacedName, gomock.Any()).DoAndReturn(
-							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig) error {
+							func(_ interface{}, _ interface{}, d *hlaiv1alpha1.DeviceConfig, _ ...ctrlclient.GetOption) error {
 								d.ObjectMeta = dc.ObjectMeta
 								d.Spec = dc.Spec
 								return nil
