@@ -80,7 +80,7 @@ jobs:
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
       - name: Install python version ${{ env.PYTHON_VERSION }}
-        uses: gabrielfalcao/pyenv-action@v10
+        uses: gabrielfalcao/pyenv-action@v11
         with:
           default: "${{ env.PYTHON_VERSION }}"
           command: pip install -U pip # upgrade pip after installing python
