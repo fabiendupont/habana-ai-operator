@@ -71,13 +71,18 @@ func init() {
 	SchemeBuilder.Register(&DeviceConfig{}, &DeviceConfigList{})
 }
 
-func (dc *DeviceConfig) GetNodeSelector() map[string]string {
+func (dc *DeviceConfig) GetNodeSelector(deviceType ...string) map[string]string {
 	ns := dc.Spec.NodeSelector
 	if ns == nil {
 		ns = make(map[string]string, 0)
 		// If no DeviceConfig.NodeSelector is specified, let's try adding NFD labels, otherwise
 		// the daemonset would be deployed on every schedulable node.
-		ns[fmt.Sprintf("feature.node.kubernetes.io/pci-%s.present", HabanaPCIVendorID)] = "true"
+		switch deviceType := ""; deviceType {
+		case "gaudi":
+			ns[fmt.Sprintf("habana.ai/hpu.%s.present", deviceType)] = "true"
+		default:
+			ns[fmt.Sprintf("feature.node.kubernetes.io/pci-%s.present", HabanaPCIVendorID)] = "true"
+		}
 	}
 	return ns
 }

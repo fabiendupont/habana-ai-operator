@@ -1,7 +1,7 @@
 apiVersion: habana.ai/v1alpha1
 kind: DeviceConfig
 metadata:
-  name: deviceconfig-sample
+  name: habana-ai-deviceconfig-instance
   namespace: habana-ai-operator
 spec:
   driverImage: ghcr.io/fabiendupont/habana-ai-driver
