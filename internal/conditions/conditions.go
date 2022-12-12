@@ -43,11 +43,11 @@ type Updater interface {
 }
 
 type updater struct {
-	statusWriter client.StatusWriter
+	client client.Client
 }
 
-func NewUpdater(sw client.StatusWriter) Updater {
-	return &updater{statusWriter: sw}
+func NewUpdater(c client.Client) Updater {
+	return &updater{client: c}
 }
 
 func (u *updater) SetConditionsReady(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig, reason, message string) error {
@@ -64,7 +64,7 @@ func (u *updater) SetConditionsReady(ctx context.Context, cr *hlaiv1alpha1.Devic
 		Reason: Ready,
 	})
 
-	return u.statusWriter.Update(ctx, cr)
+	return u.client.Status().Update(ctx, cr)
 }
 
 func (u *updater) SetConditionsErrored(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig, reason, message string) error {
@@ -81,5 +81,5 @@ func (u *updater) SetConditionsErrored(ctx context.Context, cr *hlaiv1alpha1.Dev
 		Message: message,
 	})
 
-	return u.statusWriter.Update(ctx, cr)
+	return u.client.Status().Update(ctx, cr)
 }
