@@ -64,7 +64,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - kmm.sigs.k8s.io
+  - kmm.sigs.x-k8s.io
   resources:
   - modules
   verbs:
