@@ -153,7 +153,7 @@ func (r *moduleReconciler) makeModuleLoader(cr *hlaiv1alpha1.DeviceConfig) kmmv1
 			KernelMappings:  r.makeKernelMappings(cr),
 			Modprobe: kmmv1beta1.ModprobeSpec{
 				ModuleName:   "habanalabs",
-				FirmwarePath: "/opt/lib/firmware/habanalabs",
+				FirmwarePath: "/opt/lib/firmware",
 			},
 		},
 		ServiceAccountName: driverServiceAccount,
