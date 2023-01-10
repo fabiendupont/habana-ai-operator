@@ -29,21 +29,26 @@ import (
 
 var _ = Describe("ConditionsUpdater", func() {
 	var (
-		dc *hlaiv1alpha1.DeviceConfig
-		c  *mockClient.MockClient
-		u  Updater
+		ctrl *gomock.Controller
+		dc   *hlaiv1alpha1.DeviceConfig
+		c    *mockClient.MockClient
+		u    Updater
 	)
 
 	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
 		dc = &hlaiv1alpha1.DeviceConfig{ObjectMeta: metav1.ObjectMeta{Name: "a-device-config"}}
-		c = mockClient.NewMockClient(gomock.NewController(GinkgoT()))
+		c = mockClient.NewMockClient(ctrl)
+
 		u = NewUpdater(c)
 	})
 
 	Describe("SetConditionsReady", func() {
 		Context("with successful status update", func() {
 			BeforeEach(func() {
-				c.EXPECT().Update(context.TODO(), dc)
+				subResourceClient := mockClient.NewMockSubResourceClient(ctrl)
+				c.EXPECT().Status().Return(subResourceClient)
+				subResourceClient.EXPECT().Update(context.TODO(), dc).Return(nil)
 
 				err := u.SetConditionsReady(context.TODO(), dc, "test reason", "test message")
 				Expect(err).ToNot(HaveOccurred())
@@ -73,7 +78,9 @@ var _ = Describe("ConditionsUpdater", func() {
 
 		Context("with failed status update", func() {
 			BeforeEach(func() {
-				c.EXPECT().Update(context.TODO(), dc).Return(errors.New("some error"))
+				subResourceClient := mockClient.NewMockSubResourceClient(ctrl)
+				c.EXPECT().Status().Return(subResourceClient)
+				subResourceClient.EXPECT().Update(context.TODO(), dc).Return(errors.New("some error"))
 			})
 
 			It("should return an error", func() {
@@ -86,7 +93,9 @@ var _ = Describe("ConditionsUpdater", func() {
 	Describe("SetConditionsErrored", func() {
 		Context("with successful status update", func() {
 			BeforeEach(func() {
-				c.EXPECT().Update(context.TODO(), dc)
+				subResourceClient := mockClient.NewMockSubResourceClient(ctrl)
+				c.EXPECT().Status().Return(subResourceClient)
+				subResourceClient.EXPECT().Update(context.TODO(), dc).Return(nil)
 
 				err := u.SetConditionsErrored(context.TODO(), dc, "test reason", "test message")
 				Expect(err).ToNot(HaveOccurred())
@@ -116,7 +125,9 @@ var _ = Describe("ConditionsUpdater", func() {
 
 		Context("with failed status update", func() {
 			BeforeEach(func() {
-				c.EXPECT().Update(context.TODO(), dc).Return(errors.New("some error"))
+				subResourceClient := mockClient.NewMockSubResourceClient(ctrl)
+				c.EXPECT().Status().Return(subResourceClient)
+				subResourceClient.EXPECT().Update(context.TODO(), dc).Return(errors.New("some error"))
 			})
 
 			It("should return an error", func() {

@@ -32,16 +32,16 @@ type Updater interface {
 }
 
 type updater struct {
-	statusWriter client.StatusWriter
+	client client.Client
 }
 
-func NewUpdater(sw client.StatusWriter) Updater {
-	return &updater{statusWriter: sw}
+func NewUpdater(client client.Client) Updater {
+	return &updater{client: client}
 }
 
 func (u *updater) AddDeletionFinalizer(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
 	controllerutil.AddFinalizer(cr, hlaiv1alpha1.DeviceConfigDeletionFinalizer)
-	if err := u.statusWriter.Update(ctx, cr); err != nil {
+	if err := u.client.Update(ctx, cr); err != nil {
 		return fmt.Errorf("failed to add deletion finalizer for %s: %w", cr.Name, err)
 	}
 	return nil
@@ -49,7 +49,7 @@ func (u *updater) AddDeletionFinalizer(ctx context.Context, cr *hlaiv1alpha1.Dev
 
 func (u *updater) RemoveDeletionFinalizer(ctx context.Context, cr *hlaiv1alpha1.DeviceConfig) error {
 	controllerutil.RemoveFinalizer(cr, hlaiv1alpha1.DeviceConfigDeletionFinalizer)
-	if err := u.statusWriter.Update(ctx, cr); err != nil {
+	if err := u.client.Update(ctx, cr); err != nil {
 		return fmt.Errorf("failed to remove deletion finalizer for %s: %w", cr.Name, err)
 	}
 	return nil
