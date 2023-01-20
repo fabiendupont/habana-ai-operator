@@ -1,10 +1,4 @@
-# Build the manager binary
-# TODO: As soon as the go-toolset 1.18 is available, the base image
-#       will be adjusted accordingly.
-#
-#       For example:
-#         FROM registry.access.redhat.com/ubi8/go-toolset:1.18 as builder
-FROM golang:1.18 as builder
+FROM registry.access.redhat.com/ubi8/go-toolset:1.18 as builder
 WORKDIR /opt/app-root/src
 
 # Copy the Makefile
