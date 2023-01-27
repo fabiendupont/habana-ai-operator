@@ -6,7 +6,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/kubernetes-sigs/kernel-module-management v0.0.0-20221228151328-81a48e229971
 	github.com/onsi/ginkgo/v2 v2.7.0
-	github.com/onsi/gomega v1.25.0
+	github.com/onsi/gomega v1.26.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/stretchr/testify v1.8.1
 	k8s.io/api v0.26.1
