@@ -6,7 +6,7 @@ metadata:
 spec:
   restartPolicy: OnFailure
   containers:
-  - image: vault.habana.ai/gaudi-docker/1.6.1/ubuntu20.04/habanalabs/tensorflow-installer-tf-cpu-2.9.1:latest
+  - image: vault.habana.ai/gaudi-docker/1.8.0/rhel8.6/habanalabs/tensorflow-installer-tf-cpu-2.11.0:1.8.0-690
     imagePullPolicy: IfNotPresent
     name: habana-ai-base-container
     command:

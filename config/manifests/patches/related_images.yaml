@@ -6,8 +6,8 @@ metadata:
 spec:
   relatedImages:
     - name: device-plugin
-      image: vault.habana.ai/docker-k8s-device-plugin/docker-k8s-device-plugin@sha256:dd58ff65a6afe6732253f325402abb2cb7065393720c9894581c384f07a42783
+      image: vault.habana.ai/docker-k8s-device-plugin/docker-k8s-device-plugin@sha256:c42fe7fe570f20f56a2d45f77d2861f56ba10d44de29cf68b1b8d439d1975586
     - name: node-metrics
-      image: vault.habana.ai/gaudi-metric-exporter/metric-exporter@sha256:554d946a72161cb097de9134a5bc61a843b2e301c924b8578de06876cb8cbd68
+      image: vault.habana.ai/gaudi-metric-exporter/metric-exporter@sha256:86e431314b12aa4fafddf4f98e1c4ef4551462fa5b3e61e071ae26767ac9b254
     - name: node-labeler
       image: ghcr.io/mwalter-habana/habana-node-labeler@sha256:aded2a3e96799653c73014e0cc6f9badc1a1aea3a5e4ababc34632b4ea52c5e8
