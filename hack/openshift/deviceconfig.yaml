@@ -5,4 +5,4 @@ metadata:
   namespace: habana-ai-operator
 spec:
   driverImage: ghcr.io/fabiendupont/habana-ai-driver
-  driverVersion: 1.6.0-439
+  driverVersion: 1.8.0-690

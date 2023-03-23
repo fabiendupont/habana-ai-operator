@@ -4,14 +4,14 @@
     "registry": "vault.habana.ai",
     "namespace": "docker-k8s-device-plugin",
     "name": "docker-k8s-device-plugin",
-    "tag": "1.6.0"
+    "tag": "1.8.0"
   },
   {
     "tplvar": "NODE_METRICS_IMAGE",
     "registry": "vault.habana.ai",
     "namespace": "gaudi-metric-exporter",
     "name": "metric-exporter",
-    "tag": "1.6.0-439"
+    "tag": "1.8.0-690"
   },
   {
     "tplvar": "NODE_LABELER_IMAGE",
