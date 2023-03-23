@@ -35,7 +35,7 @@ const (
 // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 // +kubebuilder:validation:Required
 type PreflightValidationSpec struct {
-	// KernelImage describes the kernel image that all Modules need to be checked against.
+	// KernelVersion describes the kernel image that all Modules need to be checked against.
 	// +kubebuilder:validation:Required
 	KernelVersion string `json:"kernelVersion"`
 
@@ -89,7 +89,7 @@ type PreflightValidationStatus struct {
 
 // PreflightValidation initiates a preflight validations for all Modules on the current Kubernetes cluster.
 // +kubebuilder:resource:path=preflightvalidations,scope=Cluster
-// +kubebuilder:resource:path=preflightvalidations,scope=Cluster,shortName=pv
+// +kubebuilder:resource:path=preflightvalidations,scope=Cluster,shortName=pfv
 type PreflightValidation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
